@@ -239,7 +239,10 @@ def show(
         raise typer.Exit(0)
 
     if full:
-        for row in rows:
+        # `rows` is best-first (score DESC); printed in reverse so the best
+        # match ends up last -- the part of the output visible without
+        # scrolling up in a terminal.
+        for row in reversed(rows):
             _panel(row)
     else:
         table = Table(show_lines=False)
