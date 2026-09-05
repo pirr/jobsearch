@@ -222,8 +222,16 @@ def show(
     limit: int = typer.Option(20, help="How many to display"),
     threshold: int = typer.Option(None, help="Minimum score"),
     full: bool = typer.Option(False, help="Show reasons and evidence"),
+    sort: str = typer.Option(
+        "asc", "--sort",
+        help="asc|desc -- score order. asc ends with the best match, "
+             "the part visible without scrolling up in a terminal.",
+    ),
 ):
-    """Show ranked vacancies, best fit first."""
+    """Show ranked vacancies."""
+    if sort not in ("asc", "desc"):
+        _fail(f"--sort must be asc or desc, got {sort!r}")
+
     config = load_config()
     if not config.profile_path.exists():
         _fail(f"no profile at {config.profile_path}")
@@ -231,18 +239,18 @@ def show(
     cutoff = config.score_threshold if threshold is None else threshold
 
     with _store() as store:
-        rows = store.ranked(candidate.hash(), cutoff, limit)
+        rows = store.ranked(candidate.hash(), cutoff, limit)  # score DESC, best first
         failed = store.failed_ratings(candidate.hash())
 
     if not rows:
         console.print(f"nothing scored at or above {cutoff}. Try --threshold 40, or `jobsearch match`.")
         raise typer.Exit(0)
 
+    if sort == "asc":
+        rows = list(reversed(rows))
+
     if full:
-        # `rows` is best-first (score DESC); printed in reverse so the best
-        # match ends up last -- the part of the output visible without
-        # scrolling up in a terminal.
-        for row in reversed(rows):
+        for row in rows:
             _panel(row)
     else:
         table = Table(show_lines=False)
