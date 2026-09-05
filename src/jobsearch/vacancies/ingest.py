@@ -18,9 +18,15 @@ from ..config import Config
 from .sources.arbeitnow import ArbeitnowSource
 from .sources.ats import ATS_SOURCES
 from .sources.base import SourceError, VacancySource
+from .sources.jobicy import JobicySource
+from .sources.remoteok import RemoteOkSource
 from .store import Store
 
 USER_AGENT = "jobsearch-mvp/0.1 (+https://github.com/local/jobsearch)"
+
+# Breadth sources: no company list needed, each covers many companies on its
+# own. Depth (ATS) sources come from data/companies.yaml instead.
+BREADTH_SOURCES: list[type[VacancySource]] = [ArbeitnowSource, RemoteOkSource, JobicySource]
 
 
 @dataclass
@@ -50,8 +56,9 @@ def build_sources(
             raise ValueError("--company requires --source greenhouse|lever|ashby")
         return [ATS_SOURCES[only](company)]
 
-    if only in (None, "arbeitnow"):
-        sources.append(ArbeitnowSource())
+    for cls in BREADTH_SOURCES:
+        if only in (None, cls.name):
+            sources.append(cls())
 
     if config.companies_path.exists():
         listed = yaml.safe_load(config.companies_path.read_text()) or {}

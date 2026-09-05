@@ -117,7 +117,10 @@ def profile(
 
 
 def ingest_cmd(
-    source: str = typer.Option(None, "--source", "-s", help="arbeitnow|greenhouse|lever|ashby"),
+    source: str = typer.Option(
+        None, "--source", "-s",
+        help="arbeitnow|remoteok|jobicy|greenhouse|lever|ashby",
+    ),
     company: str = typer.Option(None, "--company", "-c", help="Single ATS company slug"),
 ):
     """Fetch vacancies from sources into the local database."""

@@ -6,6 +6,8 @@ from conftest import FakeClient, fixture
 from jobsearch.vacancies.sources.arbeitnow import ArbeitnowSource
 from jobsearch.vacancies.sources.ats import AshbySource, GreenhouseSource, LeverSource
 from jobsearch.vacancies.sources.base import SourceError
+from jobsearch.vacancies.sources.jobicy import JobicySource
+from jobsearch.vacancies.sources.remoteok import RemoteOkSource
 
 
 async def test_arbeitnow_normalizes_double_escaped_html():
@@ -44,6 +46,29 @@ async def test_lever_concatenates_section_blocks():
     # Lever splits the body across `lists`; taking only `description` would
     # hand the rater the intro paragraph and nothing else.
     assert len(vacancies[0].description) > len(payload[0].get("descriptionPlain") or "")
+
+
+async def test_remoteok_skips_the_legal_notice_row():
+    # The feed's first element is an attribution notice, not a job -- it has
+    # no "id" field, which is what the adapter filters on.
+    vacancies = await RemoteOkSource().fetch(FakeClient(fixture("remoteok")))
+    assert vacancies
+    v = vacancies[0]
+    assert v.source == "remoteok" and v.company and v.title and v.url
+    assert v.is_remote is True
+    assert "<" not in v.description[:200]
+
+
+async def test_jobicy_requests_european_dev_roles():
+    client = FakeClient(fixture("jobicy"))
+    vacancies = await JobicySource().fetch(client)
+    assert vacancies
+    v = vacancies[0]
+    assert v.source == "jobicy" and v.company and v.title and v.url
+    assert v.is_remote is True
+    assert "<" not in v.description[:200]
+    _, params = client.requests[0]
+    assert params["geo"] == "europe" and params["industry"] == "dev"
 
 
 async def test_dead_slug_raises_rather_than_returning_empty():

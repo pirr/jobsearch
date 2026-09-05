@@ -32,9 +32,33 @@ greenhouse:
   - konux
   - urbansportsclub
   - ecoworks
+  # verified live 2026-09-05
+  - adyen
+  - algolia
+  - blacklane
+  - cleo
+  - freenow
+  - gocardless
+  - lightricks
+  - monzo
+  - n26
+  - skyscanner
+  - solarisbank
+  - speechmatics
+  - spryker
+  - tide
+  - traderepublic
+  - truelayer
+  - typeform
+  - wolt
 
 lever:
   - finn
+  # verified live 2026-09-05
+  - contentsquare
+  - jobandtalent
+  - malt
+  - swile
 
 ashby:
   - enpal
@@ -52,3 +76,9 @@ ashby:
   - tourlane
   - babbel
   - smallpdf
+  # verified live 2026-09-05
+  - ceezer
+  - reonic
+  - swan
+  - tacto
+  - upvest

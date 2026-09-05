@@ -54,6 +54,7 @@ to listen on `0.0.0.0` rather than only `127.0.0.1`).
 
 ```bash
 jobsearch ingest                    # fetch vacancies into jobsearch.db
+jobsearch ingest --source jobicy    # or just one: arbeitnow|remoteok|jobicy|greenhouse|lever|ashby
 jobsearch doctor                    # check sources, list dead company slugs
 jobsearch profile ./cv.pdf          # extract a candidate profile (archived automatically)
 jobsearch profiles                  # list every archived profile version
@@ -72,13 +73,17 @@ party; `ollama` and `llamacpp` keep it local.
 
 `data/companies.yaml` lists Greenhouse/Lever/Ashby company slugs verified live
 during design (Europe/DACH-leaning). Slugs rot — `jobsearch doctor` reports
-dead ones to prune. Arbeitnow needs no list and covers ~2,000 active EU jobs
-on its own.
+dead ones to prune.
+
+Three sources need no company list and cover many companies on their own:
+Arbeitnow (~2,000 active EU jobs), RemoteOK (global remote tech jobs) and
+Jobicy (queried with `geo=europe&industry=dev`, so only European engineering
+roles).
 
 ## Tests
 
 ```bash
-pytest              # 53 tests, all offline (recorded fixtures, no network, no LLM)
+pytest              # 83 tests, all offline (recorded fixtures, no network, no LLM)
 ```
 
 `jobsearch eval` is not part of the suite — it measures retrieval quality
