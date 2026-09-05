@@ -1,0 +1,54 @@
+# DACH / EU tech companies with public ATS job boards.
+#
+# Every slug here was verified live (HTTP 200 with >0 postings). Slugs rot --
+# personio, contentful, blinkist and sennder were all dead when probed -- so
+# re-check with `jobsearch doctor` and prune what it reports.
+#
+# doctolib and parloa appear under two platforms on purpose: they exercise
+# cross-source deduplication with genuinely duplicated postings.
+
+greenhouse:
+  - hellofresh
+  - sumup
+  - celonis
+  - flix
+  - helsing
+  - doctolib
+  - isaraerospace
+  - proton
+  - getyourguide
+  - parloa
+  - staffbase
+  - gostudent
+  - raisin
+  - bitpanda
+  - ledgy
+  - storyblok
+  - vay
+  - trivago
+  - scandit
+  - refurbed
+  - grover
+  - konux
+  - urbansportsclub
+  - ecoworks
+
+lever:
+  - finn
+
+ashby:
+  - enpal
+  - doctolib
+  - deepl
+  - parloa
+  - n8n
+  - moss
+  - egym
+  - forto
+  - clark
+  - frontify
+  - choco
+  - langfuse
+  - tourlane
+  - babbel
+  - smallpdf

@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+jobsearch.db
+profile.json
+.pytest_cache/
+state/
+profile_storage/
+.env
+.idea/
+.claude/

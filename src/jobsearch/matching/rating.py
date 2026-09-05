@@ -1,0 +1,158 @@
+"""LLM reranking of the shortlist, with grounded explanations.
+
+A free-text "why it fits" invents requirements the posting never listed and
+skills the CV never claimed. So the model must quote a span from BOTH documents
+for every skill it calls a match, and any quote that is not actually present is
+discarded before the score is stored.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, field
+
+from pydantic import BaseModel, Field, ValidationError
+
+from ..candidate.profile import CandidateProfile
+from .llm.base import LLMClient, LLMError
+
+SYSTEM = """You rate how well a candidate fits a job vacancy.
+You return only JSON. Every claim you make must be supported by a verbatim
+quote from the source documents. You never invent requirements or skills."""
+
+PROMPT = """Rate this candidate against this vacancy.
+
+Return JSON with exactly these keys:
+- "score": integer 0-100, how well the candidate fits
+- "hard_blockers": array of strings -- requirements the candidate clearly cannot
+  meet (missing mandatory qualification, wrong field entirely). Empty if none.
+- "matched_skills": array of objects, each with:
+    - "skill": string
+    - "evidence_cv": verbatim quote from the CANDIDATE PROFILE proving they have it
+    - "evidence_vacancy": verbatim quote from the VACANCY proving it is wanted
+- "missing_skills": array of strings the vacancy asks for and the candidate lacks
+- "summary_fit": 1-2 sentences on why this fits
+- "summary_gap": 1-2 sentences on why it might not fit
+
+Rules:
+- Quotes must be copied EXACTLY from the text below. Do not paraphrase.
+- If you cannot find a real quote for a skill, leave that skill out.
+- Score bands: 80-100 strong fit, 60-79 worth applying, 40-59 marginal,
+  0-39 poor fit.
+
+CANDIDATE PROFILE:
+---
+{profile}
+---
+
+VACANCY:
+Title: {title}
+Company: {company}
+Location: {location}
+---
+{description}
+---"""
+
+MAX_DESCRIPTION_CHARS = 12000
+
+
+class MatchedSkill(BaseModel):
+    skill: str
+    evidence_cv: str = ""
+    evidence_vacancy: str = ""
+
+
+class Rating(BaseModel):
+    score: int = Field(ge=0, le=100)
+    hard_blockers: list[str] = Field(default_factory=list)
+    matched_skills: list[MatchedSkill] = Field(default_factory=list)
+    missing_skills: list[str] = Field(default_factory=list)
+    summary_fit: str = ""
+    summary_gap: str = ""
+
+
+@dataclass
+class RatingOutcome:
+    vacancy_id: str
+    rating: Rating | None = None
+    error: str | None = None
+    dropped_claims: list[str] = field(default_factory=list)
+    penalty: int = 0
+    penalty_notes: list[str] = field(default_factory=list)
+
+    @property
+    def ok(self) -> bool:
+        return self.rating is not None
+
+
+def _normalize(text: str) -> str:
+    # Models reflow whitespace and swap quote characters when copying spans;
+    # neither means the quote is fabricated.
+    text = (text or "").lower()
+    text = text.replace("’", "'").replace("‘", "'")
+    text = text.replace("“", '"').replace("”", '"')
+    text = re.sub(r"[‐-―]", "-", text)
+    return " ".join(text.split())
+
+
+def _grounded(quote: str, haystack: str) -> bool:
+    q = _normalize(quote)
+    if len(q) < 8:
+        return False  # too short to prove anything
+    return q in haystack
+
+
+def verify_grounding(rating: Rating, profile_text: str, vacancy_text: str) -> list[str]:
+    """Drop matched skills whose quotes are not in the sources. Returns what went."""
+    cv_hay, vac_hay = _normalize(profile_text), _normalize(vacancy_text)
+    kept, dropped = [], []
+    for skill in rating.matched_skills:
+        if _grounded(skill.evidence_cv, cv_hay) and _grounded(skill.evidence_vacancy, vac_hay):
+            kept.append(skill)
+        else:
+            dropped.append(skill.skill)
+    rating.matched_skills = kept
+    return dropped
+
+
+def rate_one(
+    llm: LLMClient,
+    profile: CandidateProfile,
+    row,
+    *,
+    retries: int = 1,
+) -> RatingOutcome:
+    profile_text = profile.searchable_text()
+    description = (row["description"] or "")[:MAX_DESCRIPTION_CHARS]
+    prompt = PROMPT.format(
+        profile=profile_text,
+        title=row["title"],
+        company=row["company"],
+        location=row["location_raw"] or "unspecified",
+        description=description,
+    )
+
+    last_error = None
+    for _ in range(retries + 1):
+        try:
+            data = llm.complete_json(SYSTEM, prompt)
+            rating = Rating.model_validate(data)
+        except (LLMError, ValidationError, TypeError) as exc:
+            last_error = f"{type(exc).__name__}: {exc}"
+            continue
+        dropped = verify_grounding(rating, profile_text, description)
+        return RatingOutcome(row["id"], rating=rating, dropped_claims=dropped)
+
+    # Recorded as failed rather than silently dropped, so `show` can say how
+    # many vacancies never got a verdict.
+    return RatingOutcome(row["id"], error=last_error or "unknown rating failure")
+
+
+def verdict_for(score: int) -> str:
+    if score >= 80:
+        return "strong"
+    if score >= 60:
+        return "worth applying"
+    if score >= 40:
+        return "marginal"
+    return "poor"

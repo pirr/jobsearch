@@ -1,0 +1,409 @@
+{
+ "jobs": [
+  {
+   "absolute_url": "https://job-boards.greenhouse.io/celonis/jobs/7887061003?gh_jid=7887061003",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": true
+    }
+   ],
+   "internal_job_id": 5834028003,
+   "location": {
+    "name": "Remote, US, Georgia"
+   },
+   "metadata": [
+    {
+     "id": 4008575003,
+     "name": "Employment Type",
+     "value": "Regular - Unlimited",
+     "value_type": "single_select"
+    },
+    {
+     "id": 13879587003,
+     "name": "Type",
+     "value": "Professional Hire",
+     "value_type": "single_select"
+    },
+    {
+     "id": 5699689003,
+     "name": "Company",
+     "value": "Celonis",
+     "value_type": "single_select"
+    },
+    {
+     "id": 4072205003,
+     "name": "Language",
+     "value": "English",
+     "value_type": "single_select"
+    },
+    {
+     "id": 4080290003,
+     "name": "Recruiter",
+     "value": {
+      "name": "Nick Beaulac",
+      "email": "n.beaulac@celonis.com",
+      "user_id": 5490880003,
+      "employee_id": "08596"
+     },
+     "value_type": "user"
+    },
+    {
+     "id": 4080387003,
+     "name": "Referral Reward",
+     "value": {
+      "unit": "USD",
+      "amount": "1500.0"
+     },
+     "value_type": "currency"
+    },
+    {
+     "id": 7427826003,
+     "name": "agency engaged deleted",
+     "value": null,
+     "value_type": "yes_no"
+    },
+    {
+     "id": 7465144003,
+     "name": "Agency Engaged",
+     "value": null,
+     "value_type": "yes_no"
+    },
+    {
+     "id": 7427840003,
+     "name": "Agency Name",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 7427842003,
+     "name": "Agency PO-Number",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 9155214003,
+     "name": "Job Function",
+     "value": null,
+     "value_type": "single_select"
+    },
+    {
+     "id": 38472466003,
+     "name": "Workday - Integration Date",
+     "value": "2026-08-17",
+     "value_type": "date"
+    },
+    {
+     "id": 11620923003,
+     "name": "Recruitment Campaign",
+     "value": null,
+     "value_type": "single_select"
+    }
+   ],
+   "id": 7887061003,
+   "updated_at": "2026-09-04T04:33:17-04:00",
+   "requisition_id": "R15138",
+   "title": "Account Executive - CPG",
+   "company_name": "Celonis",
+   "first_published": "2026-09-03T12:50:00-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;Celonis is the trusted platform to industrialize Enterprise AI. At our core is the Celonis Context Model — which combines process data, business knowledge, and intelligence into a living digital twin of the enterprise that AI can actually understand, turning AI&#39;s operational blind spots into operational clarity. World&#39;s leading companies trust Celonis and its global ecosystem of partners to make their AI agents, people, systems, and processes work together, achieving transformational outcomes. We believe there&#39;s a massive opportunity to unlock global productivity and sustainability by giving AI the context to understand how every business process really works. Join our mission to make processes work for people, companies, and the planet.&lt;/p&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;The Team:&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;The Account Executive, a pivotal member of our enterprise sales team, is dedicated to driving growth by acquiring new clients across the region. This role is solely focused on expanding our footprint in the CPG space. Leveraging top-tier products and effective sales strategies, the Account Executive collaborates closely with Value Engineers, Business Development Representatives, and other cross-functional teams to identify and capture high-value new business opportunities.&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;The Role:&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;The primary objective is to build and expand market presence by capitalizing on untapped opportunities in the region. As an Account Executive specializing in new business sales, this role is integral to our strategy for expanding market share through targeted client acquisitions. Key responsibilities include&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;The work you’ll do:&lt;/strong&gt;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;Drive New Business: Identify and develop new opportunities within a defined territory, targeting enterprise accounts to secure new logos.&amp;nbsp;&lt;/li&gt;\n&lt;li&gt;Own the Sales Cycle: Manage the entire sales process—from prospecting and qualification to closing six-figure deals&lt;/li&gt;\n&lt;li&gt;Engage Strategic Stakeholders: Build relationships across multiple lines of business, engaging with C-level executives, operational leaders, and key decision-makers.&lt;/li&gt;\n&lt;li&gt;Deliver Tailored Solutions: Develop a deep understanding of customer needs and demonstrate how Celonis’ solutions can solve their strategic and operational challenges.&lt;/li&gt;\n&lt;li&gt;Showcase Value: Present use-case-specific pitches and demos, independently or in collaboration with Value Engineers, to highlight the measurable impact of Celonis solutions.&lt;/li&gt;\n&lt;li&gt;Collaborate with Partners: Work closely with Big 4 consulting firms, SaaS providers, and industry partners to enhance the value proposition for your prospects.&amp;nbsp;&lt;/li&gt;\n&lt;li&gt;Leverage Team Support: Partner with your virtual team, including business development representatives, pre- sales, customer success, marketing managers, and partner managers, to drive success.&lt;/li&gt;\n&lt;li&gt;This role will be expected to spend the majority of their time in the field meeting with clients&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;strong&gt;The qualifications you need:&lt;/strong&gt;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;Proven SaaS Sales Experience: A strong track record of success in enterprise SaaS sales, with a focus on securing new business and consistently achieving revenue targets.&amp;nbsp;&lt;/li&gt;\n&lt;li&gt;Expertise in Complex Sales: Experience managing long, multi-stakeholder sales cycles within large enterprise accounts.&lt;/li&gt;\n&lt;li&gt;Track record of selling enterprise-level software applications to C-level stakeholders.&lt;/li&gt;\n&lt;li&gt;Strong business acumen with a solid understanding of business processes and KPIs (e.g. in CPG)&lt;/li&gt;\n&lt;li&gt;Strong Communication Skills: Exceptional presentation and storytelling abilities to confidently influence senior stakeholders and decision-makers.&lt;/li&gt;\n&lt;li&gt;Collaborative Mindset: A team-oriented approach, leveraging internal and external resources to achieve shared goals.&amp;nbsp;&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;Visa sponsorship is not offered for this role.&lt;/p&gt;&lt;div class=&quot;content-conclusion&quot;&gt;&lt;p&gt;&lt;strong&gt;What Celonis can offer you:&lt;/strong&gt;&lt;/p&gt;\n&lt;ul class=&quot;p-rich_text_list p-rich_text_list__bullet p-rich_text_list--nested&quot; data-stringify-type=&quot;unordered-list&quot; data-list-tree=&quot;true&quot; data-indent=&quot;0&quot; data-border=&quot;0&quot;&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Pioneer Innovation:&lt;/span&gt; Work with the global leader in Process Mining and the Process Intelligence Graph to shape the future of AI-driven business operations.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Ownership from Day 1:&lt;/span&gt; Every full-time &quot;Celonaut&quot; is an owner, receiving Restricted Stock Units (RSUs) and merit-based refresh grants.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Unrivaled Family Support:&lt;/span&gt; Benefit from our inclusive parental leave policy—24 weeks of fully paid leave for primary carers and 12 weeks for supporting carers, available from your first day of employment.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Work-Life Integration:&lt;/span&gt; Enjoy Unlimited PTO (in applicable regions) and generous PTO globally, as well as a flexible hybrid work model that balances remote focus with vibrant office collaboration.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Continuous Growth:&lt;/span&gt; Elevate your skills through our 70-20-10 learning framework, mentorship programs, and access to a dedicated learning platform.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Holistic Well-being:&lt;/span&gt; Prioritize your health with subsidized Wellhub memberships, mental health counseling, and dedicated &quot;Wellness Weeks&quot; that prioritize work/life balance.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Drive Sustainability:&lt;/span&gt; Participate in annual Impact Days, where you receive paid time off to volunteer for community and environmental causes with your local office, or virtually.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Global Inclusion &amp;amp; Belonging:&lt;/span&gt; Find community through our Inclusion Think Tank and participate in our annual Inclusion Days, ensuring every voice is heard and valued.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Value-Driven Impact:&lt;/span&gt; Join a mission-led organization where our core values—Live for Customer Value, The Best Team Wins, We Own It, and Earth Is Our Future—drive every decision.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;strong&gt;About Us:&lt;/strong&gt;&lt;/p&gt;\n&lt;p data-renderer-start-pos=&quot;1264&quot;&gt;Celonis is the trusted platform to industrialize Enterprise AI, empowering organizations to analyze, design, and operate AI-driven processes. The Celonis Platform is powered by the Celonis Context Model, which combines process data, business knowledge, and intelligence to create a living digital twin of the enterprise that AI can understand — turning AI’s operational blind spots into operational clarity. Industry-leading companies around the world trust Celonis and its global ecosystem of partners to make their AI agents, people, systems, and processes work together, achieving transformational outcomes. Celonis is headquartered in Munich, Germany, and New York City, USA, with more than 20 offices worldwide.&lt;/p&gt;\n&lt;p data-renderer-start-pos=&quot;1982&quot;&gt;Get familiar with the Celonis Process Intelligence Platform by watching this &lt;a class=&quot;_ymio1r31 _ypr0glyw _zcxs1o36 _mizu194a _1ah3dkaa _ra3xnqa1 _128mdkaa _1cvmnqa1 _4davt94y _4bfu18uv _1hms8stv _ajmmnqa1 _vchhusvi _kqswh2mm _ect4ttxp _2rkolb4i _syaz13af _1a3b18uv _4fpr8stv _5goinqa1 _f8pj13af _9oik18uv _1bnxglyw _jf4cnqa1 _30l313af _1nrm18uv _c2waglyw _1iohnqa1 _9h8h12zz _10531ra0 _1ien1ra0 _n0fx1ra0 _1vhv17z1&quot; href=&quot;https://www.youtube.com/watch?v=YR5oRJGhJYg&amp;amp;list=PLuVor-ZUD4pnM6G33C5D0tjXUvlTPYBRe&quot; data-renderer-mark=&quot;true&quot; data-is-router-link=&quot;false&quot; data-testid=&quot;link-with-safety&quot;&gt;video&lt;/a&gt;.&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;Celonis Inclusion Statement:&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;At Celonis, we believe our people make us who we are and that “The Best Team Wins”. We know that the best teams are made up of people who bring different perspectives to the table. And when everyone feels included, able to speak up and knows their voice is heard - that&#39;s when creativity and innovation happen.&lt;strong&gt;&lt;br&gt;&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;Your Privacy:&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;Any information you submit to Celonis as part of your application will be processed in accordance with Celonis’ &lt;a href=&quot;https://www.celonis.com/careers/candidate-notices&quot;&gt;Accessibility and Candidate Notices&lt;/a&gt;&lt;/p&gt;\n&lt;p&gt;By submitting this application, you confirm that you agree to the storing and processing of your personal data by Celonis as described in our &lt;a href=&quot;https://www.celonis.com/careers/privacy-notice/&quot;&gt;Privacy Notice for the Application and Hiring Process&lt;/a&gt;.&lt;/p&gt;\n&lt;p&gt;Please be aware of common job offer scams, impersonators and frauds. Learn more &lt;a href=&quot;https://www.celonis.com/careers/fraud-alert/&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;",
+   "departments": [
+    {
+     "id": 4002186003,
+     "name": "Sales",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "offices": [
+    {
+     "id": 4030111003,
+     "name": "Remote, US, Georgia",
+     "location": null,
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  },
+  {
+   "absolute_url": "https://job-boards.greenhouse.io/celonis/jobs/7778127003?gh_jid=7778127003",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": true
+    }
+   ],
+   "internal_job_id": 5783216003,
+   "location": {
+    "name": "Remote, US, Texas"
+   },
+   "metadata": [
+    {
+     "id": 4008575003,
+     "name": "Employment Type",
+     "value": "Regular - Unlimited",
+     "value_type": "single_select"
+    },
+    {
+     "id": 13879587003,
+     "name": "Type",
+     "value": "Professional Hire",
+     "value_type": "single_select"
+    },
+    {
+     "id": 5699689003,
+     "name": "Company",
+     "value": "Celonis",
+     "value_type": "single_select"
+    },
+    {
+     "id": 4072205003,
+     "name": "Language",
+     "value": "English",
+     "value_type": "single_select"
+    },
+    {
+     "id": 4080290003,
+     "name": "Recruiter",
+     "value": {
+      "name": "Nick Beaulac",
+      "email": "n.beaulac@celonis.com",
+      "user_id": 5490880003,
+      "employee_id": "08596"
+     },
+     "value_type": "user"
+    },
+    {
+     "id": 4080387003,
+     "name": "Referral Reward",
+     "value": {
+      "unit": "USD",
+      "amount": "1500.0"
+     },
+     "value_type": "currency"
+    },
+    {
+     "id": 7427826003,
+     "name": "agency engaged deleted",
+     "value": null,
+     "value_type": "yes_no"
+    },
+    {
+     "id": 7465144003,
+     "name": "Agency Engaged",
+     "value": null,
+     "value_type": "yes_no"
+    },
+    {
+     "id": 7427840003,
+     "name": "Agency Name",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 7427842003,
+     "name": "Agency PO-Number",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 9155214003,
+     "name": "Job Function",
+     "value": null,
+     "value_type": "single_select"
+    },
+    {
+     "id": 38472466003,
+     "name": "Workday - Integration Date",
+     "value": "2026-06-18",
+     "value_type": "date"
+    },
+    {
+     "id": 11620923003,
+     "name": "Recruitment Campaign",
+     "value": null,
+     "value_type": "single_select"
+    }
+   ],
+   "id": 7778127003,
+   "updated_at": "2026-09-04T04:33:17-04:00",
+   "requisition_id": "R14603",
+   "title": "Account Executive - Energy",
+   "company_name": "Celonis",
+   "first_published": "2026-07-14T08:46:39-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;Celonis is the trusted platform to industrialize Enterprise AI. At our core is the Celonis Context Model — which combines process data, business knowledge, and intelligence into a living digital twin of the enterprise that AI can actually understand, turning AI&#39;s operational blind spots into operational clarity. World&#39;s leading companies trust Celonis and its global ecosystem of partners to make their AI agents, people, systems, and processes work together, achieving transformational outcomes. We believe there&#39;s a massive opportunity to unlock global productivity and sustainability by giving AI the context to understand how every business process really works. Join our mission to make processes work for people, companies, and the planet.&lt;/p&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;The Team:&lt;/strong&gt;&lt;strong&gt;&lt;br&gt;&lt;/strong&gt;We’re seeking a dynamic &lt;strong&gt;Account Executive &lt;/strong&gt;to join our North America Enterprise Sales Team. This role focuses on driving expansion within enterprise accounts in&lt;strong&gt; &lt;/strong&gt;the&lt;strong&gt; Energy &lt;/strong&gt;Industry. Reporting to the Sales Director of Energy, you’ll have the opportunity to work with world-class products, proven sales strategies, and a collaborative network of value engineers and business development representatives.&lt;br&gt;&lt;br&gt;&lt;strong&gt;The Role:&lt;/strong&gt;&lt;strong&gt;&lt;br&gt;&lt;/strong&gt;The primary goal is to expand current logos and contribute significantly to our strategic objective of capitalizing on market potential and expanding market share across enterprise Energy accounts in North America.&lt;br&gt;&lt;br&gt;&lt;strong&gt;The work you’ll do:&lt;/strong&gt;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;&lt;strong&gt;Drive New Business:&lt;/strong&gt; Identify and develop new opportunities within a defined territory, targeting enterprise accounts to secure new logos.&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;Own the Sales Cycle:&lt;/strong&gt; Manage the entire sales process—from prospecting and qualification to closing six-figure deals.&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;Engage Strategic Stakeholders:&lt;/strong&gt; Build relationships across multiple lines of business, engaging with C-level executives, operational leaders, and key decision-makers.&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;Deliver Tailored Solutions:&lt;/strong&gt; Develop a deep understanding of customer needs and demonstrate how Celonis’ solutions can solve their strategic and operational challenges.&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;Showcase Value:&lt;/strong&gt; Present use-case-specific pitches and demos, independently or in collaboration with Value Engineers, to highlight the measurable impact of Celonis solutions.&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;Collaborate with Partners:&lt;/strong&gt; Work closely with Big 4 consulting firms, SaaS providers, and industry partners to enhance the value proposition for your prospects.&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;Leverage Team Support:&lt;/strong&gt; Partner with your virtual team, including business development representatives, pre-sales, customer success, marketing managers, and partner managers, to drive success.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;strong&gt;The qualifications you need:&lt;/strong&gt;&lt;strong&gt;&lt;br&gt;&lt;/strong&gt;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;\n&lt;ul&gt;\n&lt;li&gt;&lt;strong&gt;Proven SaaS Sales Experience:&lt;/strong&gt; A strong track record of success in enterprise SaaS sales, with a focus on securing new business and consistently achieving revenue targets.&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;Expertise in Complex Sales:&lt;/strong&gt; Experience managing long, multi-stakeholder sales cycles within large enterprise accounts.&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;Industry Knowledge:&lt;/strong&gt; Familiarity with enterprise business applications such as Analytics, BI, or ERP, with the ability to engage with C-level executives (e.g., CFO, COO, CSCO, CPO) at Life Sciences companies.&amp;nbsp;&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;Business Acumen:&lt;/strong&gt; A solid understanding of business processes and key performance indicators across Life Sciences process domains&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;Strong Communication Skills:&lt;/strong&gt; Exceptional presentation and storytelling abilities to confidently influence senior stakeholders and decision-makers.&lt;/li&gt;\n&lt;li&gt;&lt;strong&gt;Collaborative Mindset:&lt;/strong&gt; A team-oriented approach, leveraging internal and external resources to achieve shared goals.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;Visa sponsorship is not offered for this role.&lt;/p&gt;&lt;div class=&quot;content-conclusion&quot;&gt;&lt;p&gt;&lt;strong&gt;What Celonis can offer you:&lt;/strong&gt;&lt;/p&gt;\n&lt;ul class=&quot;p-rich_text_list p-rich_text_list__bullet p-rich_text_list--nested&quot; data-stringify-type=&quot;unordered-list&quot; data-list-tree=&quot;true&quot; data-indent=&quot;0&quot; data-border=&quot;0&quot;&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Pioneer Innovation:&lt;/span&gt; Work with the global leader in Process Mining and the Process Intelligence Graph to shape the future of AI-driven business operations.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Ownership from Day 1:&lt;/span&gt; Every full-time &quot;Celonaut&quot; is an owner, receiving Restricted Stock Units (RSUs) and merit-based refresh grants.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Unrivaled Family Support:&lt;/span&gt; Benefit from our inclusive parental leave policy—24 weeks of fully paid leave for primary carers and 12 weeks for supporting carers, available from your first day of employment.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Work-Life Integration:&lt;/span&gt; Enjoy Unlimited PTO (in applicable regions) and generous PTO globally, as well as a flexible hybrid work model that balances remote focus with vibrant office collaboration.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Continuous Growth:&lt;/span&gt; Elevate your skills through our 70-20-10 learning framework, mentorship programs, and access to a dedicated learning platform.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Holistic Well-being:&lt;/span&gt; Prioritize your health with subsidized Wellhub memberships, mental health counseling, and dedicated &quot;Wellness Weeks&quot; that prioritize work/life balance.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Drive Sustainability:&lt;/span&gt; Participate in annual Impact Days, where you receive paid time off to volunteer for community and environmental causes with your local office, or virtually.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Global Inclusion &amp;amp; Belonging:&lt;/span&gt; Find community through our Inclusion Think Tank and participate in our annual Inclusion Days, ensuring every voice is heard and valued.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Value-Driven Impact:&lt;/span&gt; Join a mission-led organization where our core values—Live for Customer Value, The Best Team Wins, We Own It, and Earth Is Our Future—drive every decision.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;strong&gt;About Us:&lt;/strong&gt;&lt;/p&gt;\n&lt;p data-renderer-start-pos=&quot;1264&quot;&gt;Celonis is the trusted platform to industrialize Enterprise AI, empowering organizations to analyze, design, and operate AI-driven processes. The Celonis Platform is powered by the Celonis Context Model, which combines process data, business knowledge, and intelligence to create a living digital twin of the enterprise that AI can understand — turning AI’s operational blind spots into operational clarity. Industry-leading companies around the world trust Celonis and its global ecosystem of partners to make their AI agents, people, systems, and processes work together, achieving transformational outcomes. Celonis is headquartered in Munich, Germany, and New York City, USA, with more than 20 offices worldwide.&lt;/p&gt;\n&lt;p data-renderer-start-pos=&quot;1982&quot;&gt;Get familiar with the Celonis Process Intelligence Platform by watching this &lt;a class=&quot;_ymio1r31 _ypr0glyw _zcxs1o36 _mizu194a _1ah3dkaa _ra3xnqa1 _128mdkaa _1cvmnqa1 _4davt94y _4bfu18uv _1hms8stv _ajmmnqa1 _vchhusvi _kqswh2mm _ect4ttxp _2rkolb4i _syaz13af _1a3b18uv _4fpr8stv _5goinqa1 _f8pj13af _9oik18uv _1bnxglyw _jf4cnqa1 _30l313af _1nrm18uv _c2waglyw _1iohnqa1 _9h8h12zz _10531ra0 _1ien1ra0 _n0fx1ra0 _1vhv17z1&quot; href=&quot;https://www.youtube.com/watch?v=YR5oRJGhJYg&amp;amp;list=PLuVor-ZUD4pnM6G33C5D0tjXUvlTPYBRe&quot; data-renderer-mark=&quot;true&quot; data-is-router-link=&quot;false&quot; data-testid=&quot;link-with-safety&quot;&gt;video&lt;/a&gt;.&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;Celonis Inclusion Statement:&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;At Celonis, we believe our people make us who we are and that “The Best Team Wins”. We know that the best teams are made up of people who bring different perspectives to the table. And when everyone feels included, able to speak up and knows their voice is heard - that&#39;s when creativity and innovation happen.&lt;strong&gt;&lt;br&gt;&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;Your Privacy:&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;Any information you submit to Celonis as part of your application will be processed in accordance with Celonis’ &lt;a href=&quot;https://www.celonis.com/careers/candidate-notices&quot;&gt;Accessibility and Candidate Notices&lt;/a&gt;&lt;/p&gt;\n&lt;p&gt;By submitting this application, you confirm that you agree to the storing and processing of your personal data by Celonis as described in our &lt;a href=&quot;https://www.celonis.com/careers/privacy-notice/&quot;&gt;Privacy Notice for the Application and Hiring Process&lt;/a&gt;.&lt;/p&gt;\n&lt;p&gt;Please be aware of common job offer scams, impersonators and frauds. Learn more &lt;a href=&quot;https://www.celonis.com/careers/fraud-alert/&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;",
+   "departments": [
+    {
+     "id": 4002186003,
+     "name": "Sales",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "offices": [
+    {
+     "id": 4030134003,
+     "name": "Remote, US, Texas",
+     "location": null,
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  },
+  {
+   "absolute_url": "https://job-boards.greenhouse.io/celonis/jobs/7799840003?gh_jid=7799840003",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": true
+    }
+   ],
+   "internal_job_id": 5793061003,
+   "location": {
+    "name": "Remote, US, Washington DC"
+   },
+   "metadata": [
+    {
+     "id": 4008575003,
+     "name": "Employment Type",
+     "value": "Regular - Unlimited",
+     "value_type": "single_select"
+    },
+    {
+     "id": 13879587003,
+     "name": "Type",
+     "value": "Professional Hire",
+     "value_type": "single_select"
+    },
+    {
+     "id": 5699689003,
+     "name": "Company",
+     "value": "Celonis",
+     "value_type": "single_select"
+    },
+    {
+     "id": 4072205003,
+     "name": "Language",
+     "value": "English",
+     "value_type": "single_select"
+    },
+    {
+     "id": 4080290003,
+     "name": "Recruiter",
+     "value": {
+      "name": "Nick Beaulac",
+      "email": "n.beaulac@celonis.com",
+      "user_id": 5490880003,
+      "employee_id": "08596"
+     },
+     "value_type": "user"
+    },
+    {
+     "id": 4080387003,
+     "name": "Referral Reward",
+     "value": {
+      "unit": "USD",
+      "amount": "1500.0"
+     },
+     "value_type": "currency"
+    },
+    {
+     "id": 7427826003,
+     "name": "agency engaged deleted",
+     "value": null,
+     "value_type": "yes_no"
+    },
+    {
+     "id": 7465144003,
+     "name": "Agency Engaged",
+     "value": null,
+     "value_type": "yes_no"
+    },
+    {
+     "id": 7427840003,
+     "name": "Agency Name",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 7427842003,
+     "name": "Agency PO-Number",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 9155214003,
+     "name": "Job Function",
+     "value": null,
+     "value_type": "single_select"
+    },
+    {
+     "id": 38472466003,
+     "name": "Workday - Integration Date",
+     "value": "2026-07-09",
+     "value_type": "date"
+    },
+    {
+     "id": 11620923003,
+     "name": "Recruitment Campaign",
+     "value": null,
+     "value_type": "single_select"
+    }
+   ],
+   "id": 7799840003,
+   "updated_at": "2026-09-04T04:33:17-04:00",
+   "requisition_id": "R14853",
+   "title": "Account Executive - Federal",
+   "company_name": "Celonis",
+   "first_published": "2026-07-15T15:14:54-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;Celonis is the trusted platform to industrialize Enterprise AI. At our core is the Celonis Context Model — which combines process data, business knowledge, and intelligence into a living digital twin of the enterprise that AI can actually understand, turning AI&#39;s operational blind spots into operational clarity. World&#39;s leading companies trust Celonis and its global ecosystem of partners to make their AI agents, people, systems, and processes work together, achieving transformational outcomes. We believe there&#39;s a massive opportunity to unlock global productivity and sustainability by giving AI the context to understand how every business process really works. Join our mission to make processes work for people, companies, and the planet.&lt;/p&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;The Team:&lt;/strong&gt;&lt;br&gt;&lt;br&gt;The Account Executive, a pivotal member of our enterprise sales team, is dedicated to driving growth by acquiring new clients across the region. This role is solely focused on expanding our footprint in the U.S Public Sector. Leveraging top-tier products and effective sales strategies, the Account Executive collaborates closely with Value Engineers, Business Development Representatives, and other cross-functional teams to identify and capture high-value new business opportunities.&lt;/p&gt;\n&lt;p&gt;&lt;br&gt;&lt;strong&gt;The Role:&lt;/strong&gt;&lt;br&gt;&lt;br&gt;The primary objective is to build and expand market presence by capitalizing on untapped opportunities in the region. As an Account Executive specializing in new business sales, this role is integral to our strategy for expanding market share through targeted client acquisitions. Key responsibilities include&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;&lt;br&gt;&lt;/strong&gt;&lt;strong&gt;The work you’ll do:&lt;/strong&gt;&lt;strong&gt;&lt;br&gt;&lt;/strong&gt;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;Discover and cultivate new business opportunities within a designated set of accounts within your assigned client portfolio.&lt;/li&gt;\n&lt;li&gt;Establish and strengthen connections across various levels of the organization, engaging with executives and decision-makers to understand their needs.&lt;/li&gt;\n&lt;li&gt;Comprehend the strategic and operational requirements of your target accounts and proficiently articulate how Celonis can address them.&lt;/li&gt;\n&lt;li&gt;Guide the sales journey, adhering to a structured approach through prospecting, initial contact, qualification, client engagement, needs analysis, solution proposal, and ultimately closing deals.&lt;/li&gt;\n&lt;li&gt;Collaborate with Value Engineering or personally conduct comprehensive presentations and demonstrations tailored to specific use cases, showcasing the value of our solutions.&lt;/li&gt;\n&lt;li&gt;Forge strong partnerships, particularly with leading consulting firms, SaaS partners, and the Big4.&lt;/li&gt;\n&lt;li&gt;Work closely with your virtual team, which includes business development representatives, value engineers, partner managers, and marketing specialists, to ensure seamless collaboration and success.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;strong&gt;The qualifications you need:&lt;/strong&gt;&lt;strong&gt;&lt;br&gt;&lt;/strong&gt;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;8+ years of demonstrated success in Software as a Service (SaaS) sales, particularly in roles focused on both expanding existing business opportunities and cultivating new business opportunities.&lt;/li&gt;\n&lt;li&gt;5 years of experience selling into federal government&lt;/li&gt;\n&lt;li&gt;Proven ability to navigate complex sales cycles involving multiple decision-makers.&lt;/li&gt;\n&lt;li&gt;Track record of selling enterprise-level software applications to C-level stakeholders.&lt;/li&gt;\n&lt;li&gt;Strong business acumen with a solid understanding of business processes and KPIs (e.g. in Finance, Supply Chain)&lt;/li&gt;\n&lt;li&gt;Experience collaborating with partners, such as consulting firms or providers of enterprise technology solutions.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;Visa sponsorship is not offered for this role.&lt;/p&gt;&lt;div class=&quot;content-pay-transparency&quot;&gt;&lt;div class=&quot;pay-input&quot;&gt;&lt;div class=&quot;description&quot;&gt;&lt;p&gt;&lt;span data-sheets-value=&quot;{&amp;quot;1&amp;quot;:2,&amp;quot;2&amp;quot;:&amp;quot;For positions in New York City only: We offer a base salary range of xxx – xxx, based on a Full Time Schedule. \\n\\nTotal compensation package will include base salary + bonus/commission + equity + benefits (health, dental, life, 401k, and paid time off). Please note that the base salary range is a guideline, and that the actual total compensation offer will be determined based on various factors, including, but not limited to, applicant&#39;s qualifications, skills, experiences, and location. &amp;quot;}&quot; data-sheets-userformat=&quot;{&amp;quot;2&amp;quot;:4480,&amp;quot;10&amp;quot;:0,&amp;quot;11&amp;quot;:4,&amp;quot;15&amp;quot;:&amp;quot;Arial&amp;quot;}&quot;&gt;The base salary range below is for the role in the specified location, based on a Full Time Schedule. &lt;br&gt;&lt;br&gt;Total compensation package will include base salary + bonus/commission + equity + benefits (health, dental, life, 401k, and paid time off). Please note that the base salary range is a guideline, and that the actual total compensation offer will be determined based on various factors, including, but not limited to, applicant&#39;s qualifications, skills, experiences, and location.&lt;/span&gt;&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;title&quot;&gt;The base salary range below is for the role in Washington, D.C. based on a Full Time Schedule.  &lt;/div&gt;&lt;div class=&quot;pay-range&quot;&gt;&lt;span&gt;$163,000&lt;/span&gt;&lt;span class=&quot;divider&quot;&gt;&amp;mdash;&lt;/span&gt;&lt;span&gt;$193,000 USD&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;content-conclusion&quot;&gt;&lt;p&gt;&lt;strong&gt;What Celonis can offer you:&lt;/strong&gt;&lt;/p&gt;\n&lt;ul class=&quot;p-rich_text_list p-rich_text_list__bullet p-rich_text_list--nested&quot; data-stringify-type=&quot;unordered-list&quot; data-list-tree=&quot;true&quot; data-indent=&quot;0&quot; data-border=&quot;0&quot;&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Pioneer Innovation:&lt;/span&gt; Work with the global leader in Process Mining and the Process Intelligence Graph to shape the future of AI-driven business operations.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Ownership from Day 1:&lt;/span&gt; Every full-time &quot;Celonaut&quot; is an owner, receiving Restricted Stock Units (RSUs) and merit-based refresh grants.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Unrivaled Family Support:&lt;/span&gt; Benefit from our inclusive parental leave policy—24 weeks of fully paid leave for primary carers and 12 weeks for supporting carers, available from your first day of employment.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Work-Life Integration:&lt;/span&gt; Enjoy Unlimited PTO (in applicable regions) and generous PTO globally, as well as a flexible hybrid work model that balances remote focus with vibrant office collaboration.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Continuous Growth:&lt;/span&gt; Elevate your skills through our 70-20-10 learning framework, mentorship programs, and access to a dedicated learning platform.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Holistic Well-being:&lt;/span&gt; Prioritize your health with subsidized Wellhub memberships, mental health counseling, and dedicated &quot;Wellness Weeks&quot; that prioritize work/life balance.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Drive Sustainability:&lt;/span&gt; Participate in annual Impact Days, where you receive paid time off to volunteer for community and environmental causes with your local office, or virtually.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Global Inclusion &amp;amp; Belonging:&lt;/span&gt; Find community through our Inclusion Think Tank and participate in our annual Inclusion Days, ensuring every voice is heard and valued.&lt;/li&gt;\n&lt;li&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;Value-Driven Impact:&lt;/span&gt; Join a mission-led organization where our core values—Live for Customer Value, The Best Team Wins, We Own It, and Earth Is Our Future—drive every decision.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;strong&gt;About Us:&lt;/strong&gt;&lt;/p&gt;\n&lt;p data-renderer-start-pos=&quot;1264&quot;&gt;Celonis is the trusted platform to industrialize Enterprise AI, empowering organizations to analyze, design, and operate AI-driven processes. The Celonis Platform is powered by the Celonis Context Model, which combines process data, business knowledge, and intelligence to create a living digital twin of the enterprise that AI can understand — turning AI’s operational blind spots into operational clarity. Industry-leading companies around the world trust Celonis and its global ecosystem of partners to make their AI agents, people, systems, and processes work together, achieving transformational outcomes. Celonis is headquartered in Munich, Germany, and New York City, USA, with more than 20 offices worldwide.&lt;/p&gt;\n&lt;p data-renderer-start-pos=&quot;1982&quot;&gt;Get familiar with the Celonis Process Intelligence Platform by watching this &lt;a class=&quot;_ymio1r31 _ypr0glyw _zcxs1o36 _mizu194a _1ah3dkaa _ra3xnqa1 _128mdkaa _1cvmnqa1 _4davt94y _4bfu18uv _1hms8stv _ajmmnqa1 _vchhusvi _kqswh2mm _ect4ttxp _2rkolb4i _syaz13af _1a3b18uv _4fpr8stv _5goinqa1 _f8pj13af _9oik18uv _1bnxglyw _jf4cnqa1 _30l313af _1nrm18uv _c2waglyw _1iohnqa1 _9h8h12zz _10531ra0 _1ien1ra0 _n0fx1ra0 _1vhv17z1&quot; href=&quot;https://www.youtube.com/watch?v=YR5oRJGhJYg&amp;amp;list=PLuVor-ZUD4pnM6G33C5D0tjXUvlTPYBRe&quot; data-renderer-mark=&quot;true&quot; data-is-router-link=&quot;false&quot; data-testid=&quot;link-with-safety&quot;&gt;video&lt;/a&gt;.&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;Celonis Inclusion Statement:&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;At Celonis, we believe our people make us who we are and that “The Best Team Wins”. We know that the best teams are made up of people who bring different perspectives to the table. And when everyone feels included, able to speak up and knows their voice is heard - that&#39;s when creativity and innovation happen.&lt;strong&gt;&lt;br&gt;&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;Your Privacy:&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;Any information you submit to Celonis as part of your application will be processed in accordance with Celonis’ &lt;a href=&quot;https://www.celonis.com/careers/candidate-notices&quot;&gt;Accessibility and Candidate Notices&lt;/a&gt;&lt;/p&gt;\n&lt;p&gt;By submitting this application, you confirm that you agree to the storing and processing of your personal data by Celonis as described in our &lt;a href=&quot;https://www.celonis.com/careers/privacy-notice/&quot;&gt;Privacy Notice for the Application and Hiring Process&lt;/a&gt;.&lt;/p&gt;\n&lt;p&gt;Please be aware of common job offer scams, impersonators and frauds. Learn more &lt;a href=&quot;https://www.celonis.com/careers/fraud-alert/&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;",
+   "departments": [
+    {
+     "id": 4002186003,
+     "name": "Sales",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "offices": [
+    {
+     "id": 4030138003,
+     "name": "Remote, US, Washington DC",
+     "location": null,
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  }
+ ],
+ "meta": {
+  "total": 273
+ }
+}

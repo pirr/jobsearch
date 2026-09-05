@@ -1,0 +1,45 @@
+# The CLI is one-shot per command, not a long-running service, so there is a
+# single `jobsearch` service invoked as `docker compose run --rm jobsearch <cmd>`.
+# It talks to an LLM server that runs OUTSIDE this compose file -- llama.cpp or
+# Ollama on your desktop -- reached over the network, not started here.
+#
+# Two ways to reach that server, pick based on where it actually runs:
+#
+#  1. Same machine as Docker (llama.cpp on your desktop, compose also on your
+#     desktop) -- uncomment `network_mode: host` below. The container then
+#     shares the host's network stack directly, so JOBSEARCH_LLAMACPP_HOST=
+#     http://localhost:8080 in .env just works, with no translation tricks.
+#     Linux only; not available on Docker Desktop for Mac/Windows.
+#
+#  2. Different machine, or you want the container's network isolated --
+#     leave network_mode commented out and keep extra_hosts below.
+#     host.docker.internal then resolves to the Docker host from inside the
+#     container. Point JOBSEARCH_LLAMACPP_HOST at that hostname, or at the
+#     other machine's LAN address in .env, e.g. http://192.168.1.20:8080.
+#     Requires the llama.cpp/Ollama server to listen on 0.0.0.0, not only
+#     127.0.0.1 -- a server bound to loopback only is unreachable from a
+#     container even with the routing set up correctly.
+services:
+  jobsearch:
+    build: .
+    # network_mode: host
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      JOBSEARCH_LLAMACPP_HOST: ${JOBSEARCH_LLAMACPP_HOST:-http://host.docker.internal:8080}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      # Pointed inside the mounted directory below, not at bare filenames:
+      # bind-mounting a single file that does not yet exist on the host makes
+      # Docker silently create a directory there instead, which then breaks
+      # sqlite3.connect() on first run. A directory mount has no such trap.
+      JOBSEARCH_DB: /app/state/jobsearch.db
+      JOBSEARCH_PROFILE: /app/state/profile.json
+      JOBSEARCH_PROFILE_STORAGE: /app/profile_storage
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./state:/app/state
+      - ./data:/app/data
+      - ./profile_storage:/app/profile_storage
+    working_dir: /app
