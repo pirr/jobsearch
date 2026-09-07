@@ -65,10 +65,13 @@ def run_match(
     #
     # Rank once over the whole filtered corpus (one consistent set of BM25/
     # embedding statistics), then bucket by geo/visa reachability while
-    # preserving each bucket's relevance order. Reachable vacancies fill the
-    # shortlist first; region-restricted, non-sponsoring ones only backfill
-    # whatever slots are left, instead of competing for LLM budget on equal
-    # footing with a vacancy the candidate can actually take.
+    # preserving each bucket's relevance order. Reachable vacancies get most
+    # of the shortlist; region-restricted, non-sponsoring ones only get a
+    # small reserved floor of slots, not the bulk of it. A real
+    # corpus has thousands of reachable vacancies -- comfortably more than
+    # shortlist_size on its own -- so without a floor the restricted bucket
+    # would never get a single slot, ever, ceasing to be "deprioritized" and
+    # becoming permanently invisible instead.
     scores = retriever.rank(profile.searchable_text(), [row_text(r) for r in filtered.kept])
     by_relevance = [r for r, _ in sorted(
         zip(filtered.kept, scores), key=lambda pair: pair[1], reverse=True
@@ -76,10 +79,36 @@ def run_match(
     reachable, restricted = [], []
     for r in by_relevance:
         (reachable if eligibility.is_reachable(eligibility.classify(r)) else restricted).append(r)
-    shortlist = (reachable + restricted)[:shortlist_size]
+
+    reserved = min(len(restricted), max(1, shortlist_size // 10)) if restricted else 0
+    if reachable:
+        # Never let the reserve eat the only slot(s) reachable candidates
+        # would otherwise get -- the floor exists so restricted vacancies
+        # aren't permanently invisible, not to invert the priority order.
+        reserved = min(reserved, max(0, shortlist_size - 1))
+    reachable_take = min(len(reachable), shortlist_size - reserved)
+    leftover = shortlist_size - reachable_take - reserved
+    restricted_take = min(len(restricted), reserved + max(0, leftover))
+    shortlist = reachable[:reachable_take] + restricted[:restricted_take]
+
+    # `--force` promises to re-rate every vacancy already rated for this
+    # profile. Honor that even for one the bucketing above would otherwise
+    # leave out (e.g. a vacancy rated before this eligibility logic existed,
+    # now reclassified as restricted) instead of silently limiting a forced
+    # re-rate to whatever the freshly computed shortlist happens to contain.
+    if force:
+        by_id = {r["id"]: r for r in filtered.kept}
+        shortlisted_ids = {r["id"] for r in shortlist}
+        shortlist += [
+            by_id[vid] for vid in store.rated_ids(profile_hash)
+            if vid in by_id and vid not in shortlisted_ids
+        ]
+
     report.shortlisted = len(shortlist)
     report.restricted_total = len(restricted)
-    report.restricted_shortlisted = max(0, len(shortlist) - len(reachable))
+    report.restricted_shortlisted = sum(
+        1 for r in shortlist if not eligibility.is_reachable(eligibility.classify(r))
+    )
 
     done = set() if force else store.rated_ids(profile_hash)
     for row in shortlist:

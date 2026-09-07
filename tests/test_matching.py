@@ -330,6 +330,69 @@ def test_restricted_vacancies_backfill_leftover_shortlist_slots(store, profile):
     assert report.rated == 1
 
 
+def test_restricted_vacancies_still_get_a_reserved_floor_with_a_large_reachable_pool(store, profile):
+    """Without a reserved floor, any real corpus -- where the reachable pool
+    alone dwarfs shortlist_size -- would starve the restricted bucket
+    completely, turning "deprioritized" into "never rated." This is the bug
+    this test guards against."""
+    restricted = make_vacancy(
+        source_id="us-only", title="Backend Engineer",
+        description="Python role. Remote (USA). Visa sponsorship is not offered for this role.",
+        is_remote=True,
+    )
+    reachable_pool = [make_vacancy(source_id=f"open-{i}", title=f"Backend Engineer {i}",
+                                    description=f"Python role, remote from anywhere, number {i}.",
+                                    is_remote=True)
+                       for i in range(50)]
+    store.upsert_vacancies([restricted, *reachable_pool])
+
+    report = run_match(store, profile,
+                       FakeLLM([{"score": 70, "matched_skills": []} for _ in range(20)]),
+                       BM25Retriever(), shortlist_size=10)
+
+    assert report.restricted_total == 1
+    assert report.restricted_shortlisted == 1
+    assert restricted.id in store.rated_ids(profile.hash())
+
+
+def test_force_reconsiders_a_restricted_vacancy_crowded_out_by_reachable_ones(store, profile):
+    """Reproduces the real bug: a vacancy classified restricted, and already
+    rated before this eligibility logic existed, must still be reachable via
+    --force even though normal bucketing gives the restricted bucket 0
+    shortlist slots whenever a single reachable vacancy already fills a
+    shortlist this small."""
+    restricted = make_vacancy(
+        source_id="us-only", title="Backend Engineer",
+        description="Python role. Remote (USA). Visa sponsorship is not offered for this role.",
+        is_remote=True,
+    )
+    reachable = make_vacancy(
+        source_id="open", title="Backend Engineer",
+        description="Python role, remote from anywhere.",
+        is_remote=True,
+    )
+    store.upsert_vacancies([restricted, reachable])
+    store.save_rating(restricted.id, profile.hash(), "test", score=92, verdict="strong")
+    store.save_rating(reachable.id, profile.hash(), "test", score=70, verdict="worth applying")
+
+    # Normal run: the single slot goes to the reachable vacancy; both are
+    # already rated, so nothing gets re-rated.
+    normal = run_match(store, profile, FakeLLM([]), BM25Retriever(), shortlist_size=1)
+    assert normal.llm_calls == 0
+
+    # --force must still reconsider the restricted vacancy despite it never
+    # making the shortlist.
+    forced = run_match(
+        store, profile,
+        FakeLLM([{"score": 25, "hard_blockers": ["US-only remote"], "matched_skills": []},
+                 {"score": 65, "matched_skills": []}]),
+        BM25Retriever(), shortlist_size=1, force=True,
+    )
+    assert forced.llm_calls == 2
+    row = next(r for r in store.ranked(profile.hash(), 0, 10) if r["id"] == restricted.id)
+    assert row["score"] != 92  # actually re-rated, not left at the seeded value
+
+
 def test_rate_one_prompt_includes_candidate_constraints_and_geo_signal(profile):
     llm = FakeLLM([{"score": 50, "matched_skills": [], "missing_skills": [],
                     "summary_fit": "", "summary_gap": ""}])
