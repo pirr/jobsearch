@@ -253,12 +253,17 @@ def show(
         for row in rows:
             _panel(row)
     else:
-        table = Table(show_lines=False)
+        table = Table(show_lines=True)
         table.add_column("score", justify="right", style="bold")
         table.add_column("verdict")
+        table.add_column("status")
         table.add_column("title", max_width=44)
         table.add_column("company", max_width=18)
         table.add_column("location", max_width=16)
+        # Full 32-char id, not truncated: Store.set_status matches it exactly
+        # (no short-hash support), so a truncated id couldn't be pasted
+        # straight into `jobsearch mark <id> ...`.
+        table.add_column("id", no_wrap=True)
         # no_wrap, not a max_width + fold: folding breaks a URL across
         # multiple rendered lines with real line breaks, which corrupts both
         # copy-paste and a terminal's own link auto-detection. no_wrap keeps
@@ -267,9 +272,11 @@ def show(
         table.add_column("link", no_wrap=True)
         for row in rows:
             colour = "green" if row["score"] >= 80 else "yellow" if row["score"] >= 60 else "white"
+            status = row["status"]
+            status_text = f"[cyan]{status}[/]" if status == "applied" else f"[dim]{status}[/]"
             table.add_row(
-                f"[{colour}]{row['score']}[/]", row["verdict"], row["title"],
-                row["company"], row["location_raw"] or "-", row["url"],
+                f"[{colour}]{row['score']}[/]", row["verdict"], status_text, row["title"],
+                row["company"], row["location_raw"] or "-", row["id"], row["url"],
             )
         console.print(table)
         console.print("[dim]`jobsearch show --full` for why each fits, `jobsearch mark <id> dismissed` to hide one.[/]")
@@ -281,7 +288,12 @@ def _panel(row) -> None:
     matched = json.loads(row["matched_skills"] or "[]")
     missing = json.loads(row["missing_skills"] or "[]")
     blockers = json.loads(row["hard_blockers"] or "[]")
-    body = [f"[bold]{row['company']}[/] · {row['location_raw'] or 'location unspecified'}", row["url"], ""]
+    status = row["status"]
+    status_text = f"[cyan]status: {status}[/]" if status == "applied" else f"[dim]status: {status}[/]"
+    body = [
+        f"[bold]{row['company']}[/] · {row['location_raw'] or 'location unspecified'}",
+        row["url"], status_text, "",
+    ]
     if matched:
         body.append("[green]fits:[/]")
         for m in matched[:6]:
