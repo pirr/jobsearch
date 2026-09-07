@@ -1,4 +1,7 @@
-# DACH / EU tech companies with public ATS job boards.
+# DACH / EU tech companies with public ATS job boards, plus a global batch
+# sourced from github.com/poteto/hiring-without-whiteboards (companies known
+# for non-whiteboard interviews) -- many of those are US-based/US-remote, not
+# DACH/EU, so check location notes on the entry before assuming EU fit.
 #
 # Every slug here was verified live (HTTP 200 with >0 postings). Slugs rot --
 # personio, contentful, blinkist and sennder were all dead when probed -- so
@@ -51,6 +54,31 @@ greenhouse:
   - truelayer
   - typeform
   - wolt
+  # verified live 2026-09-07 (hiring-without-whiteboards, US-heavy unless noted)
+  - able
+  - axios
+  - b12
+  - calendly
+  - civisanalytics
+  - clara
+  - emarketer
+  - enigmaio               # Enigma
+  - hologram
+  - homechef
+  - homelight
+  - knock
+  - launchdarkly
+  - nearform               # Formidable Labs, rebranded; remote-first, EU offices
+  - netlify
+  - novacredit
+  - odeko
+  - omadahealth
+  - philo
+  - pieinsurance
+  - seesaw
+  - smartlyio              # Helsinki
+  - sourcegraph91          # Sourcegraph
+  - splice
 
 lever:
   - finn
@@ -59,6 +87,13 @@ lever:
   - jobandtalent
   - malt
   - swile
+  # verified live 2026-09-07 (hiring-without-whiteboards, US-heavy unless noted)
+  - BDG                    # Bustle
+  - collabora
+  - goalbookapp-2          # Goalbook
+  - octoenergy             # Octopus Energy, London/EU + remote
+  - protolabs              # 3D Hubs, acquired by Protolabs; Amsterdam
+  - spreedly
 
 ashby:
   - enpal
@@ -82,3 +117,25 @@ ashby:
   - swan
   - tacto
   - upvest
+  # verified live 2026-09-07 (hiring-without-whiteboards, US-heavy unless noted)
+  - Almabase
+  - clarisights
+  - clipboard
+  - Close                  # USA-only remote per job postings
+  - colonist
+  - fonoa
+  - freetrade              # London
+  - hinge-health
+  - hoxhunt                # Helsinki
+  - Influxdata
+  - kit                    # ConvertKit, rebranded
+  - mux
+  - pleo
+  - prokeep
+  - radiant                # Ori, rebranded; London
+  - render
+  - replit                 # Repl.it, rebranded
+  - tooploox
+  - top-hat
+  - Uberall                # Berlin, DACH; slug is case-sensitive
+  - wealthsimple           # Toronto
