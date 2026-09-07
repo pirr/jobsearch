@@ -4,12 +4,13 @@ import pytest
 from conftest import make_vacancy
 
 from jobsearch.candidate.profile import CandidateProfile, Constraint
+from jobsearch.matching import eligibility
 from jobsearch.matching.evaluation import ndcg_at_k, precision_at_k, recall_at_k
 from jobsearch.matching.filters import apply_hard_filters, soft_penalty
 from jobsearch.matching.llm.base import parse_json_response, LLMError
 from jobsearch.matching.llm.fake import FakeLLM
 from jobsearch.matching.pipeline import run_match
-from jobsearch.matching.rating import Rating, verify_grounding
+from jobsearch.matching.rating import Rating, rate_one, verify_grounding
 from jobsearch.matching.retrieval import BM25Retriever
 
 
@@ -56,6 +57,52 @@ def test_remote_vacancy_satisfies_a_location_constraint():
 
 def test_no_hard_constraints_keeps_everything():
     assert len(apply_hard_filters(CandidateProfile(), [row(), row(id="v2")]).kept) == 2
+
+
+# ---- geo/visa eligibility --------------------------------------------
+
+def test_classify_flags_us_restricted_remote_with_denied_sponsorship():
+    r = row(location_raw="Remote", is_remote=True,
+            description="This salary range takes into account all possible "
+                        "locations within the United States. Visa sponsorship "
+                        "is not offered for this role.")
+    elig = eligibility.classify(r)
+    assert elig.region_restricted == "US"
+    assert elig.visa_sponsorship is False
+    assert not eligibility.is_reachable(elig)
+
+
+def test_classify_treats_jobicy_europe_geo_as_eu_restricted():
+    r = row(location_raw="Europe", is_remote=True, description="Full-time remote role.")
+    elig = eligibility.classify(r)
+    assert elig.region_restricted == "EU"
+    assert not eligibility.is_reachable(elig)
+
+
+def test_classify_treats_jobicy_anywhere_geo_as_open():
+    r = row(location_raw="Anywhere", is_remote=True, description="Contract role.")
+    elig = eligibility.classify(r)
+    assert elig.region_restricted is None
+    assert eligibility.is_reachable(elig)
+
+
+def test_classify_region_restricted_but_sponsoring_is_reachable():
+    r = row(location_raw="Remote (USA)", is_remote=True,
+            description="We are happy to sponsor a work visa for the right candidate.")
+    elig = eligibility.classify(r)
+    assert elig.region_restricted == "US"
+    assert elig.visa_sponsorship is True
+    assert eligibility.is_reachable(elig)
+
+
+def test_classify_ignores_restriction_phrasing_on_a_declared_onsite_role():
+    """is_remote=False routes through the existing soft location penalty
+    instead -- this module only judges the scope of an actually-remote role."""
+    r = row(location_raw="Berlin", is_remote=False,
+            description="Remote (USA) team members occasionally visit this office.")
+    elig = eligibility.classify(r)
+    assert elig.region_restricted is None
+    assert eligibility.is_reachable(elig)
 
 
 # ---- retrieval -------------------------------------------------------
@@ -239,6 +286,62 @@ def test_malformed_llm_output_is_recorded_as_failed(store, profile):
     assert report.failed == 1
     assert store.failed_ratings(profile.hash()) == 1
     assert store.ranked(profile.hash(), 0, 10) == []
+
+
+def test_restricted_vacancies_are_shortlisted_only_after_reachable_ones(store, profile):
+    restricted = make_vacancy(
+        source_id="us-only", title="Backend Engineer",
+        description="Python role. Remote (USA). Visa sponsorship is not offered for this role.",
+        is_remote=True,
+    )
+    reachable = make_vacancy(
+        source_id="open", title="Backend Engineer",
+        description="Python role, remote from anywhere.",
+        is_remote=True,
+    )
+    # Inserted restricted-first so a naive relevance-only ranking could still
+    # land it first; the reachable one must win the single shortlist slot.
+    store.upsert_vacancies([restricted, reachable])
+    llm = FakeLLM([{"score": 70, "matched_skills": [], "missing_skills": [],
+                    "summary_fit": "", "summary_gap": ""} for _ in range(5)])
+
+    report = run_match(store, profile, llm, BM25Retriever(), shortlist_size=1)
+
+    assert report.restricted_total == 1
+    assert report.restricted_shortlisted == 0
+    assert report.rated == 1
+    assert store.ranked(profile.hash(), 0, 10)[0]["id"] == reachable.id
+
+
+def test_restricted_vacancies_backfill_leftover_shortlist_slots(store, profile):
+    restricted = make_vacancy(
+        source_id="us-only", title="Backend Engineer",
+        description="Python role. Remote (USA). Visa sponsorship is not offered for this role.",
+        is_remote=True,
+    )
+    store.upsert_vacancies([restricted])
+    llm = FakeLLM([{"score": 70, "matched_skills": [], "missing_skills": [],
+                    "summary_fit": "", "summary_gap": ""}])
+
+    report = run_match(store, profile, llm, BM25Retriever(), shortlist_size=3)
+
+    assert report.restricted_total == 1
+    assert report.restricted_shortlisted == 1
+    assert report.rated == 1
+
+
+def test_rate_one_prompt_includes_candidate_constraints_and_geo_signal(profile):
+    llm = FakeLLM([{"score": 50, "matched_skills": [], "missing_skills": [],
+                    "summary_fit": "", "summary_gap": ""}])
+    r = row(location_raw="Remote", is_remote=True,
+            description="Remote (USA). Visa sponsorship is not offered for this role.")
+
+    rate_one(llm, profile, r)
+
+    _, prompt = llm.calls[0]
+    assert "Berlin" in prompt  # the candidate's own location constraint
+    assert "restricted to US" in prompt
+    assert "explicitly denied" in prompt
 
 
 def test_soft_penalty_lowers_but_does_not_remove(store):

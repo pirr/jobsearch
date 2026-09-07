@@ -202,6 +202,12 @@ def match(
         f"\n{report.total:,} stored -> {report.after_filters:,} after hard filters "
         f"-> {report.shortlisted} shortlisted"
     )
+    if report.restricted_total:
+        console.print(
+            f"[dim]{report.restricted_shortlisted} of those are region-restricted/"
+            f"no-sponsorship postings backfilled after {report.shortlisted - report.restricted_shortlisted} "
+            f"reachable ones ({report.restricted_total} restricted total, ranked last)[/]"
+        )
     console.print(
         f"LLM calls: [bold]{report.llm_calls}[/] "
         f"(skipped {report.already_rated} already rated) | "

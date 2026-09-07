@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from pydantic import BaseModel, Field, ValidationError
 
 from ..candidate.profile import CandidateProfile
+from . import eligibility
 from .llm.base import LLMClient, LLMError
 
 SYSTEM = """You rate how well a candidate fits a job vacancy.
@@ -25,7 +26,10 @@ PROMPT = """Rate this candidate against this vacancy.
 Return JSON with exactly these keys:
 - "score": integer 0-100, how well the candidate fits
 - "hard_blockers": array of strings -- requirements the candidate clearly cannot
-  meet (missing mandatory qualification, wrong field entirely). Empty if none.
+  meet (missing mandatory qualification, wrong field entirely, OR a geographic/
+  visa/work-authorization restriction the candidate's constraints below cannot
+  satisfy -- e.g. the role is restricted to a region they are not eligible to
+  work in and no visa sponsorship is mentioned). Empty if none.
 - "matched_skills": array of objects, each with:
     - "skill": string
     - "evidence_cv": verbatim quote from the CANDIDATE PROFILE proving they have it
@@ -37,6 +41,9 @@ Return JSON with exactly these keys:
 Rules:
 - Quotes must be copied EXACTLY from the text below. Do not paraphrase.
 - If you cannot find a real quote for a skill, leave that skill out.
+- A geographic/visa restriction the candidate's constraints cannot satisfy is
+  a hard blocker even when every technical skill matches -- do not let a
+  strong technical fit hide it.
 - Score bands: 80-100 strong fit, 60-79 worth applying, 40-59 marginal,
   0-39 poor fit.
 
@@ -44,11 +51,16 @@ CANDIDATE PROFILE:
 ---
 {profile}
 ---
+CANDIDATE CONSTRAINTS (from their CV/preferences -- "inferred" ones are a
+guess, not certain, weigh them accordingly):
+{constraints}
 
 VACANCY:
 Title: {title}
 Company: {company}
 Location: {location}
+Geo/visa signal (heuristic keyword match -- verify against the vacancy text
+below rather than trusting it blindly): {geo_signal}
 ---
 {description}
 ---"""
@@ -115,6 +127,16 @@ def verify_grounding(rating: Rating, profile_text: str, vacancy_text: str) -> li
     return dropped
 
 
+def _constraints_text(profile: CandidateProfile) -> str:
+    if not profile.constraints:
+        return "none recorded"
+    lines = [
+        f"- {c.kind}: {c.value} ({'stated in CV' if c.stated else 'inferred, not stated in CV'})"
+        for c in profile.constraints
+    ]
+    return "\n".join(lines)
+
+
 def rate_one(
     llm: LLMClient,
     profile: CandidateProfile,
@@ -126,9 +148,11 @@ def rate_one(
     description = (row["description"] or "")[:MAX_DESCRIPTION_CHARS]
     prompt = PROMPT.format(
         profile=profile_text,
+        constraints=_constraints_text(profile),
         title=row["title"],
         company=row["company"],
         location=row["location_raw"] or "unspecified",
+        geo_signal=eligibility.describe(eligibility.classify(row)),
         description=description,
     )
 

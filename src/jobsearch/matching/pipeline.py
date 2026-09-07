@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 
 from ..candidate.profile import CandidateProfile
 from ..vacancies.store import Store
+from . import eligibility
 from .filters import apply_hard_filters, soft_penalty
 from .rating import rate_one, verdict_for
 from .retrieval import Retriever
@@ -26,6 +27,8 @@ class MatchReport:
     after_filters: int = 0
     excluded: list[tuple[str, str]] = field(default_factory=list)
     shortlisted: int = 0
+    restricted_total: int = 0
+    restricted_shortlisted: int = 0
     already_rated: int = 0
     rated: int = 0
     failed: int = 0
@@ -59,13 +62,24 @@ def run_match(
 
     # Shortlist cheaply. This is the step that keeps a run affordable: without
     # it the LLM would be called once per vacancy across the whole corpus.
-    ranked = retriever.top_n(
-        profile.searchable_text(),
-        [row_text(r) for r in filtered.kept],
-        shortlist_size,
-    )
-    shortlist = [filtered.kept[i] for i, _ in ranked]
+    #
+    # Rank once over the whole filtered corpus (one consistent set of BM25/
+    # embedding statistics), then bucket by geo/visa reachability while
+    # preserving each bucket's relevance order. Reachable vacancies fill the
+    # shortlist first; region-restricted, non-sponsoring ones only backfill
+    # whatever slots are left, instead of competing for LLM budget on equal
+    # footing with a vacancy the candidate can actually take.
+    scores = retriever.rank(profile.searchable_text(), [row_text(r) for r in filtered.kept])
+    by_relevance = [r for r, _ in sorted(
+        zip(filtered.kept, scores), key=lambda pair: pair[1], reverse=True
+    )]
+    reachable, restricted = [], []
+    for r in by_relevance:
+        (reachable if eligibility.is_reachable(eligibility.classify(r)) else restricted).append(r)
+    shortlist = (reachable + restricted)[:shortlist_size]
     report.shortlisted = len(shortlist)
+    report.restricted_total = len(restricted)
+    report.restricted_shortlisted = max(0, len(shortlist) - len(reachable))
 
     done = set() if force else store.rated_ids(profile_hash)
     for row in shortlist:
