@@ -45,8 +45,15 @@ def _violates(constraint: Constraint, row) -> str | None:
         wanted = value.strip().lower()
         if not wanted:
             return None
-        if row["is_remote"] == 1:
-            return None  # remote satisfies any location requirement
+        if row["is_remote"] in (1, None):
+            # Confirmed remote satisfies any location requirement outright.
+            # Unknown ("the source never said") is treated the same way, not
+            # as onsite: sources disagree wildly on whether they report this
+            # at all -- the literal same posting can show is_remote=1 on one
+            # ATS board and never set it on another -- so guessing "onsite"
+            # from silence would apply this penalty inconsistently to what is
+            # often the same vacancy.
+            return None
         haystack = " ".join(
             str(row[f] or "").lower()
             for f in ("location_raw", "location_city", "location_country")

@@ -26,10 +26,13 @@ PROMPT = """Rate this candidate against this vacancy.
 Return JSON with exactly these keys:
 - "score": integer 0-100, how well the candidate fits
 - "hard_blockers": array of strings -- requirements the candidate clearly cannot
-  meet (missing mandatory qualification, wrong field entirely, OR a geographic/
-  visa/work-authorization restriction the candidate's constraints below cannot
-  satisfy -- e.g. the role is restricted to a region they are not eligible to
-  work in and no visa sponsorship is mentioned). Empty if none.
+  meet: a missing mandatory qualification, wrong field entirely, OR the
+  vacancy being remote-in-name-only -- advertised as remote but actually
+  restricted to a region the candidate is not eligible to work in (see the
+  geo/visa signal below), with no visa sponsorship offered. Do NOT put an
+  ordinary on-site/hybrid role simply being in a different city or country
+  than the candidate here -- that is already scored separately as a location
+  preference, not a hard blocker. Empty if none.
 - "matched_skills": array of objects, each with:
     - "skill": string
     - "evidence_cv": verbatim quote from the CANDIDATE PROFILE proving they have it
@@ -41,9 +44,11 @@ Return JSON with exactly these keys:
 Rules:
 - Quotes must be copied EXACTLY from the text below. Do not paraphrase.
 - If you cannot find a real quote for a skill, leave that skill out.
-- A geographic/visa restriction the candidate's constraints cannot satisfy is
-  a hard blocker even when every technical skill matches -- do not let a
-  strong technical fit hide it.
+- A remote-in-name-only geographic/visa restriction (see hard_blockers above)
+  is a hard blocker even when every technical skill matches -- do not let a
+  strong technical fit hide it. An ordinary on-site/hybrid location
+  difference is NOT a hard blocker on its own, no matter how far it is from
+  the candidate's location.
 - Score bands: 80-100 strong fit, 60-79 worth applying, 40-59 marginal,
   0-39 poor fit.
 
@@ -51,16 +56,17 @@ CANDIDATE PROFILE:
 ---
 {profile}
 ---
-CANDIDATE CONSTRAINTS (from their CV/preferences -- "inferred" ones are a
-guess, not certain, weigh them accordingly):
+CANDIDATE CONSTRAINTS (for context only -- "inferred" ones are a guess, not
+stated in the CV; do not treat an ordinary on-site/hybrid location difference
+against these as a hard blocker, per the hard_blockers rule above):
 {constraints}
 
 VACANCY:
 Title: {title}
 Company: {company}
 Location: {location}
-Geo/visa signal (heuristic keyword match -- verify against the vacancy text
-below rather than trusting it blindly): {geo_signal}
+Geo/visa signal (heuristic keyword match over this vacancy's own text --
+verify against the text below rather than trusting it blindly): {geo_signal}
 ---
 {description}
 ---"""
@@ -137,6 +143,16 @@ def _constraints_text(profile: CandidateProfile) -> str:
     return "\n".join(lines)
 
 
+def _geo_note(elig: eligibility.GeoEligibility) -> str:
+    note = eligibility.describe(elig)
+    if elig.region_restricted is None:
+        # Reinforce the prompt's own rule at the exact point the model reads
+        # the signal, for the common case (a plain on-site/hybrid posting)
+        # where it would otherwise be tempted to hard-block on location alone.
+        note += " -- do not treat this vacancy's plain location as a hard blocker"
+    return note
+
+
 def rate_one(
     llm: LLMClient,
     profile: CandidateProfile,
@@ -152,7 +168,7 @@ def rate_one(
         title=row["title"],
         company=row["company"],
         location=row["location_raw"] or "unspecified",
-        geo_signal=eligibility.describe(eligibility.classify(row)),
+        geo_signal=_geo_note(eligibility.classify(row)),
         description=description,
     )
 

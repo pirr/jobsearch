@@ -59,6 +59,27 @@ def test_no_hard_constraints_keeps_everything():
     assert len(apply_hard_filters(CandidateProfile(), [row(), row(id="v2")]).kept) == 2
 
 
+def test_unknown_remote_status_does_not_trigger_the_location_penalty():
+    """Two ATS boards can report is_remote differently for the literal same
+    posting (one says True, the other never says at all) -- unknown must not
+    be treated as confirmed on-site for scoring any more than it is for hard
+    filtering, or the same job scores inconsistently depending only on which
+    board it was fetched from."""
+    p = CandidateProfile(constraints=[Constraint(
+        kind="location", value="Budva, Montenegro", stated=False)])
+    penalty, notes = soft_penalty(p, row(location_raw="Berlin", is_remote=None))
+    assert penalty == 0
+    assert notes == []
+
+
+def test_confirmed_onsite_still_triggers_the_location_penalty():
+    p = CandidateProfile(constraints=[Constraint(
+        kind="location", value="Budva, Montenegro", stated=False)])
+    penalty, notes = soft_penalty(p, row(location_raw="Berlin", is_remote=False))
+    assert penalty == 10
+    assert "inferred" in notes[0]
+
+
 # ---- geo/visa eligibility --------------------------------------------
 
 def test_classify_flags_us_restricted_remote_with_denied_sponsorship():
@@ -405,6 +426,24 @@ def test_rate_one_prompt_includes_candidate_constraints_and_geo_signal(profile):
     assert "Berlin" in prompt  # the candidate's own location constraint
     assert "restricted to US" in prompt
     assert "explicitly denied" in prompt
+
+
+def test_rate_one_prompt_discourages_hard_blocking_plain_onsite_mismatch(profile):
+    """A plain on-site/hybrid posting (no geo/visa restriction detected) must
+    not read as license to hard-block on location alone -- that regressed
+    into treating the candidate's inferred location as an exclusion, which
+    this project's hard/soft constraint split explicitly says an inferred
+    constraint must never do."""
+    llm = FakeLLM([{"score": 50, "matched_skills": [], "missing_skills": [],
+                    "summary_fit": "", "summary_gap": ""}])
+    r = row(location_raw="Berlin", is_remote=None,
+            description="Join our Berlin office. Hybrid role, 3 days on-site.")
+
+    rate_one(llm, profile, r)
+
+    _, prompt = llm.calls[0]
+    assert "ordinary on-site/hybrid role" in prompt
+    assert "not treat this vacancy's plain location as a hard blocker" in prompt
 
 
 def test_soft_penalty_lowers_but_does_not_remove(store):
