@@ -48,6 +48,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -183,6 +184,49 @@ def synthetic_cases() -> list[Case]:
     ]
 
 
+def realistic_cases() -> list[Case]:
+    """Same idea as synthetic_cases(), but built from real vacancy text (full
+    ~2000-char postings from state/jobsearch.db) instead of hand-written
+    sentences -- the synthetic cases' own limitation, documented above, is
+    that short clean text doesn't carry the noise real postings do. Stored
+    separately in scripts/realistic_cases.json (NOT under data/golden/ --
+    GoldenSet.load_dir() globs every *.json there, so a case file dropped in
+    that directory breaks every golden-set-driven run with a KeyError;
+    verified this the hard way before moving it here).
+
+    Currently one case: "negation-robustness-real" reuses the same idea as
+    the synthetic "negation-robustness" case (a hedged/optional skill mention
+    that shouldn't count as a real match), but with a real posting found by
+    searching the corpus for "nice to have"/"not required" phrasing near a
+    skill: a Flix "Automation Solutions Engineer (Celonis)" role whose actual
+    description says "Scripting (Python or similar) is a plus but not
+    required" -- a real-world instance of exactly the pattern the synthetic
+    case invented, buried in ~2000 characters of otherwise unrelated
+    (enterprise systems integration) content instead of standing alone in one
+    sentence.
+
+    This confirmed the dilution hypothesis directly: both models pass at
+    real length, and with a noticeably wider safety margin than the short
+    synthetic version. Weakest-real-match-to-trap gap was 0.031 (nomic) /
+    0.053 (embeddinggemma) on the short Kubernetes/AWS case; at real length
+    it's 0.079 / 0.088 -- roughly 2-2.5x wider. One buried hedge sentence
+    among ~2000 characters of otherwise clearly-different content pulls the
+    whole document's embedding further from the query than the same
+    sentence does when it's most of a short document. Short synthetic cases
+    aren't just "less noisy" than real postings -- they can specifically
+    understate how safe a model actually is against this failure mode.
+    """
+    path = Path(__file__).resolve().parent / "realistic_cases.json"
+    if not path.exists():
+        return []
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return [
+        Case(name=name, query=spec["query"],
+             documents=[(text, rel) for text, rel in spec["documents"]])
+        for name, spec in data.items()
+    ]
+
+
 @dataclass
 class Row:
     model: str
@@ -260,7 +304,7 @@ def main() -> None:
     args = parser.parse_args()
 
     golden_sets = GoldenSet.load_dir(Path(args.golden_dir))
-    cases = synthetic_cases()
+    cases = synthetic_cases() + realistic_cases()
     rows: list[Row] = []
 
     def case_k(case: Case) -> int:
