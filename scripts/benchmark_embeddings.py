@@ -194,27 +194,51 @@ def realistic_cases() -> list[Case]:
     that directory breaks every golden-set-driven run with a KeyError;
     verified this the hard way before moving it here).
 
-    Currently one case: "negation-robustness-real" reuses the same idea as
-    the synthetic "negation-robustness" case (a hedged/optional skill mention
-    that shouldn't count as a real match), but with a real posting found by
-    searching the corpus for "nice to have"/"not required" phrasing near a
-    skill: a Flix "Automation Solutions Engineer (Celonis)" role whose actual
-    description says "Scripting (Python or similar) is a plus but not
-    required" -- a real-world instance of exactly the pattern the synthetic
-    case invented, buried in ~2000 characters of otherwise unrelated
-    (enterprise systems integration) content instead of standing alone in one
-    sentence.
+    Cases so far:
 
-    This confirmed the dilution hypothesis directly: both models pass at
-    real length, and with a noticeably wider safety margin than the short
-    synthetic version. Weakest-real-match-to-trap gap was 0.031 (nomic) /
-    0.053 (embeddinggemma) on the short Kubernetes/AWS case; at real length
-    it's 0.079 / 0.088 -- roughly 2-2.5x wider. One buried hedge sentence
-    among ~2000 characters of otherwise clearly-different content pulls the
-    whole document's embedding further from the query than the same
-    sentence does when it's most of a short document. Short synthetic cases
-    aren't just "less noisy" than real postings -- they can specifically
-    understate how safe a model actually is against this failure mode.
+    "negation-robustness-real" / "negation-robustness-real-frontend" reuse
+    the synthetic "negation-robustness" idea (a hedged/optional skill mention
+    that shouldn't count as a real match) with real postings found by
+    searching the corpus for "nice to have"/"not required" phrasing near a
+    skill -- e.g. a Flix "Automation Solutions Engineer (Celonis)" role whose
+    actual description says "Scripting (Python or similar) is a plus but not
+    required". This confirmed a dilution hypothesis directly: both models
+    pass at real ~2000-char length, with a noticeably wider safety margin
+    than the short synthetic version (weakest-match-to-trap gap 0.031/0.053
+    nomic/embeddinggemma on the short Kubernetes/AWS case vs. 0.079/0.088 at
+    real length -- roughly 2-2.5x wider). One buried hedge sentence among
+    ~2000 characters of otherwise clearly-different content pulls the whole
+    document's embedding further from the query than the same sentence does
+    when it's most of a short document. Short synthetic cases aren't just
+    "less noisy" than real postings -- they can specifically understate how
+    safe a model actually is against this failure mode.
+
+    "language-robustness" -- found by ranking every golden set's true
+    positives by their own retrieval rank and inspecting the worst ones: a
+    genuinely relevant, entirely-German posting ("Softwarearchitekt") ranked
+    dead last (32/32) under nomic-embed-text-v1.5 in the
+    senior-python-backend-berlin golden set, purely from the language
+    mismatch. embeddinggemma-300m does notably better on the same document
+    (19/32) but neither is reliable in a tight, controlled version of this
+    case.
+
+    "remote-preference-real" -- CandidateProfile.searchable_text() (what
+    actually reaches the embedding query in production, see
+    candidate/profile.py) never includes the candidate's remote/location
+    constraints at all -- filters.py's soft "remote" penalty (12 points) is
+    the only place remote preference is enforced, and it only runs AFTER an
+    LLM rating call has already been spent on the shortlisted vacancy. This
+    case checks whether that gap actually costs anything at the retrieval
+    step: two real remote Python postings vs. two real on-site-only ones
+    (one, GlassFlow Berlin, has strong enough content overlap to be a
+    genuine temptation), query text WITH an explicit remote-preference
+    sentence added (the *best* case for the model, better than what
+    production actually sends). nomic-embed-text-v1.5 still ranks both
+    remote postings above both on-site ones correctly. embeddinggemma-300m
+    does not: both on-site postings outrank one of the two genuine remote
+    matches. One more real, reproducible case where nomic is the safer
+    choice, on an axis (remote preference) that -- unlike the language
+    finding above -- this project's actual candidate cares about.
     """
     path = Path(__file__).resolve().parent / "realistic_cases.json"
     if not path.exists():
