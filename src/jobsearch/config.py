@@ -99,6 +99,12 @@ class Config:
         default_factory=lambda: _env_int("JOBSEARCH_CONCURRENCY", 6)
     )
 
+    # Adzuna is the only source that needs credentials; empty means "not
+    # configured", and build_sources() skips it silently in that case rather
+    # than erroring every run for users who never signed up for a key.
+    adzuna_app_id: str = field(default_factory=lambda: _env_str("JOBSEARCH_ADZUNA_APP_ID", ""))
+    adzuna_app_key: str = field(default_factory=lambda: _env_str("JOBSEARCH_ADZUNA_APP_KEY", ""))
+
 
 def load_config() -> Config:
     return Config()

@@ -1,0 +1,62 @@
+{
+  "__CLASS__": "Adzuna::API::Response::JobSearchResults",
+  "count": 2,
+  "results": [
+    {
+      "__CLASS__": "Adzuna::API::Response::Job",
+      "id": "129698749",
+      "title": "Remote Javascript Developer",
+      "description": "JavaScript Developer Corporate team is hiring a remote-friendly engineer to join our platform group...",
+      "redirect_url": "http://adzuna.co.uk/jobs/land/ad/129698749",
+      "created": "2026-08-08T18:07:39Z",
+      "salary_min": 50000,
+      "salary_max": 55000,
+      "salary_is_predicted": 0,
+      "longitude": -0.776902,
+      "latitude": 51.571999,
+      "location": {
+        "__CLASS__": "Adzuna::API::Response::Location",
+        "area": ["UK", "South East England", "Buckinghamshire", "Marlow"],
+        "display_name": "Marlow, Buckinghamshire"
+      },
+      "category": {
+        "__CLASS__": "Adzuna::API::Response::Category",
+        "label": "IT Jobs",
+        "tag": "it-jobs"
+      },
+      "company": {
+        "__CLASS__": "Adzuna::API::Response::Company",
+        "display_name": "Corporate Project Solutions"
+      },
+      "contract_type": "permanent",
+      "contract_time": "full_time"
+    },
+    {
+      "__CLASS__": "Adzuna::API::Response::Job",
+      "id": "126977586",
+      "title": "Senior Developer Python (Remote)",
+      "description": "and experience with more than one language a distinct advantage (python/ruby/perl/javascript/erlang). The Senior Developer Python will be involved in helping us to scale up and develop...",
+      "redirect_url": "http://adzuna.co.uk/jobs/land/ad/126977586",
+      "created": "2026-08-23T19:32:43Z",
+      "salary_min": 55000,
+      "salary_max": 55000,
+      "salary_is_predicted": 0,
+      "location": {
+        "__CLASS__": "Adzuna::API::Response::Location",
+        "area": ["UK", "London", "Central London", "The City"],
+        "display_name": "The City, Central London"
+      },
+      "category": {
+        "__CLASS__": "Adzuna::API::Response::Category",
+        "label": "IT Jobs",
+        "tag": "it-jobs"
+      },
+      "company": {
+        "__CLASS__": "Adzuna::API::Response::Company",
+        "display_name": "Exposed Solutions Limited"
+      },
+      "contract_type": "permanent",
+      "contract_time": "full_time"
+    }
+  ]
+}

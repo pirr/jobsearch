@@ -15,6 +15,7 @@ import httpx
 import yaml
 
 from ..config import Config
+from .sources.adzuna import AdzunaSource
 from .sources.arbeitnow import ArbeitnowSource
 from .sources.ats import ATS_SOURCES
 from .sources.base import SourceError, VacancySource
@@ -64,6 +65,19 @@ def build_sources(
     for cls in BREADTH_SOURCES:
         if only in (None, cls.name):
             sources.append(cls())
+
+    # Adzuna is the only source needing credentials, so it can't sit in
+    # BREADTH_SOURCES with the others (that loop calls `cls()` with no args).
+    # Unconfigured means skipped silently, not an error, on every plain run;
+    # explicitly requesting it via --source with no credentials set is still
+    # a real error, same as an unknown source name.
+    if config.adzuna_app_id and config.adzuna_app_key:
+        if only in (None, AdzunaSource.name):
+            sources.append(AdzunaSource(config.adzuna_app_id, config.adzuna_app_key))
+    elif only == AdzunaSource.name:
+        raise ValueError(
+            "adzuna requires JOBSEARCH_ADZUNA_APP_ID and JOBSEARCH_ADZUNA_APP_KEY"
+        )
 
     if config.companies_path.exists():
         listed = yaml.safe_load(config.companies_path.read_text()) or {}

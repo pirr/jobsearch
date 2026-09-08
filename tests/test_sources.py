@@ -5,8 +5,10 @@ import asyncio
 import pytest
 from conftest import FakeClient, fixture
 
+from jobsearch.config import Config
 from jobsearch.vacancies.dedupe import vacancy_id
-from jobsearch.vacancies.ingest import _run_one
+from jobsearch.vacancies.ingest import _run_one, build_sources
+from jobsearch.vacancies.sources.adzuna import AdzunaSource
 from jobsearch.vacancies.sources.arbeitnow import ArbeitnowSource
 from jobsearch.vacancies.sources.ats import AshbySource, GreenhouseSource, LeverSource
 from jobsearch.vacancies.sources.base import SourceError
@@ -101,6 +103,30 @@ async def test_himalayas_uses_guid_as_source_id_and_stops_without_cursor():
     assert len(client.requests) == 1
 
 
+async def test_adzuna_scopes_location_country_to_the_queried_country():
+    # A single country, single page: the fixture has 2 rows (< RESULTS_PER_PAGE
+    # of 50), so pagination stops after one request.
+    client = FakeClient(fixture("adzuna"))
+    vacancies = await AdzunaSource("id", "key", countries=["gb"]).fetch(client)
+    assert vacancies
+    v = vacancies[0]
+    assert v.source == "adzuna" and v.company and v.title and v.url
+    # location.display_name ("Marlow, Buckinghamshire") has no country hint
+    # normalize_location recognizes -- the queried country code is used instead.
+    assert v.location_country == "GB"
+    assert "<" not in v.description[:200]
+    _, params = client.requests[0]
+    assert params["app_id"] == "id" and params["app_key"] == "key" and params["what"] == "remote"
+    assert len(client.requests) == 1
+
+
+async def test_adzuna_queries_every_configured_country():
+    client = FakeClient(fixture("adzuna"))
+    vacancies = await AdzunaSource("id", "key", countries=["gb", "us", "de"]).fetch(client)
+    assert len(client.requests) == 3
+    assert {v.location_country for v in vacancies} == {"GB", "US", "DE"}
+
+
 async def test_dead_slug_raises_rather_than_returning_empty():
     # A 404 means the company slug is dead. Silently ingesting nothing would
     # hide that; `doctor` depends on this surfacing.
@@ -144,6 +170,28 @@ async def test_run_one_marks_a_vacancy_closed_when_a_later_fetch_omits_it(store)
     store.save_rating(stayed_id, "h", "f", score=80)
     assert [r["title"] for r in store.ranked("h", 0, 10)] == ["Role 1"]
     assert store.ranked("h", 0, 10, only_status="closed")[0]["title"] == "Role 2"
+
+
+def test_build_sources_skips_adzuna_silently_when_unconfigured(tmp_path):
+    config = Config(companies_path=tmp_path / "none.yaml")
+    names = [s.name for s in build_sources(config)]
+    assert "adzuna" not in names
+
+
+def test_build_sources_requesting_adzuna_without_credentials_raises(tmp_path):
+    config = Config(companies_path=tmp_path / "none.yaml")
+    with pytest.raises(ValueError, match="adzuna"):
+        build_sources(config, only="adzuna")
+
+
+def test_build_sources_includes_adzuna_once_credentials_are_set(tmp_path):
+    config = Config(
+        companies_path=tmp_path / "none.yaml",
+        adzuna_app_id="id",
+        adzuna_app_key="key",
+    )
+    sources = build_sources(config)
+    assert [s for s in sources if s.name == "adzuna"]
 
 
 async def test_run_one_skips_the_closed_check_for_breadth_sources(store):
