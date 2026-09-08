@@ -23,7 +23,7 @@ class FakeLLM(LLMClient):
         return {"score": 50, "hard_blockers": [], "matched_skills": [],
                 "missing_skills": [], "summary_fit": "", "summary_gap": ""}
 
-    def embed(self, texts: Sequence[str]) -> list[list[float]]:
+    def embed(self, texts: Sequence[str], *, role: str = "document") -> list[list[float]]:
         out = []
         for text in texts:
             digest = hashlib.sha256(text.encode("utf-8")).digest()

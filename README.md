@@ -105,7 +105,7 @@ the account, and Belarus isn't an Adzuna market at all.
 ## Tests
 
 ```bash
-pytest              # 124 tests, all offline (recorded fixtures, no network, no LLM)
+pytest              # 130 tests, all offline (recorded fixtures, no network, no LLM)
 ```
 
 `jobsearch eval` is not part of the suite — it measures retrieval quality

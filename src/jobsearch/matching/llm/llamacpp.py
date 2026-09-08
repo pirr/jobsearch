@@ -43,12 +43,19 @@ class LlamaCppClient(LLMClient):
         model: str = "local",
         embed_model: str | None = None,
         timeout: float = 180.0,
+        embed_query_prefix: str = "search_query: ",
+        embed_document_prefix: str = "search_document: ",
     ):
         self.host = host.rstrip("/")
         self.model = model
         self.embed_model = embed_model or model
         self.timeout = timeout
         self.name = f"llamacpp:{model}"
+        # Nomic's text embedding models (this project's documented default)
+        # require these task prefixes for good retrieval quality; a different
+        # embedding model that doesn't use this convention can blank them out.
+        self.embed_query_prefix = embed_query_prefix
+        self.embed_document_prefix = embed_document_prefix
 
     def complete_json(self, system: str, prompt: str, *, max_tokens: int = 8192) -> dict:
         try:
@@ -95,12 +102,13 @@ class LlamaCppClient(LLMClient):
             )
         return parse_json_response(content)
 
-    def embed(self, texts: Sequence[str]) -> list[list[float]]:
+    def embed(self, texts: Sequence[str], *, role: str = "document") -> list[list[float]]:
+        prefix = self.embed_query_prefix if role == "query" else self.embed_document_prefix
         try:
             resp = httpx.post(
                 f"{self.host}/v1/embeddings",
                 timeout=self.timeout,
-                json={"model": self.embed_model, "input": list(texts)},
+                json={"model": self.embed_model, "input": [f"{prefix}{t}" for t in texts]},
             )
             resp.raise_for_status()
         except httpx.HTTPError as exc:

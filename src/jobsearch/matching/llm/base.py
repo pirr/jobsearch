@@ -26,8 +26,15 @@ class LLMClient(abc.ABC):
         """Return parsed JSON. Raise LLMError if the model won't produce any."""
 
     @abc.abstractmethod
-    def embed(self, texts: Sequence[str]) -> list[list[float]]:
-        """Embedding vectors, one per input text."""
+    def embed(self, texts: Sequence[str], *, role: str = "document") -> list[list[float]]:
+        """Embedding vectors, one per input text.
+
+        `role` is "query" (the text being searched with) or "document" (a
+        corpus item being indexed) -- some embedding models (e.g. Nomic's)
+        require a different task-instruction prefix per role for good
+        retrieval quality. Concrete clients own applying that prefix; callers
+        must not prepend anything themselves.
+        """
 
     def supports_embeddings(self) -> bool:
         return True

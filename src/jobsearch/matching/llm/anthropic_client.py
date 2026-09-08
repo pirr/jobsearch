@@ -40,7 +40,7 @@ class AnthropicClient(LLMClient):
     def supports_embeddings(self) -> bool:
         return False
 
-    def embed(self, texts: Sequence[str]) -> list[list[float]]:
+    def embed(self, texts: Sequence[str], *, role: str = "document") -> list[list[float]]:
         raise LLMError(
             "Anthropic offers no embedding endpoint. Use JOBSEARCH_RETRIEVER=bm25, "
             "or keep Ollama available for embeddings."

@@ -86,6 +86,16 @@ class Config:
     llamacpp_embed_model: str = field(
         default_factory=lambda: _env_str("JOBSEARCH_LLAMACPP_EMBED_MODEL", "")
     )
+    # Nomic's text embedding models (the documented default above) require a
+    # different task-instruction prefix per role for good retrieval quality.
+    # Blank these out via env var for a different embedding model that
+    # doesn't use this convention.
+    embed_query_prefix: str = field(
+        default_factory=lambda: _env_str("JOBSEARCH_EMBED_QUERY_PREFIX", "search_query: ")
+    )
+    embed_document_prefix: str = field(
+        default_factory=lambda: _env_str("JOBSEARCH_EMBED_DOCUMENT_PREFIX", "search_document: ")
+    )
 
     # Matching
     retriever: str = field(default_factory=lambda: _env_str("JOBSEARCH_RETRIEVER", "embeddings"))

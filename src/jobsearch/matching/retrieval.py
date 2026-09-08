@@ -110,21 +110,23 @@ class EmbeddingRetriever(Retriever):
     def rank(self, query: str, documents: Sequence[str]) -> list[float]:
         if not documents:
             return []
-        q_vec = self._embed_one(query)
+        q_vec = self._embed_one(query, role="query")
         scores: list[float] = []
         for start in range(0, len(documents), self.batch_size):
             batch = documents[start : start + self.batch_size]
             try:
-                vectors = self.llm.embed([d[: self.max_chars] for d in batch])
+                vectors = self.llm.embed(
+                    [d[: self.max_chars] for d in batch], role="document"
+                )
             except LLMError:
                 # One oversized document can fail an entire batch. Falling
                 # back to one-at-a-time isolates it instead of losing the
                 # other 63 documents' scores to a single bad one.
-                vectors = [self._embed_one(d) for d in batch]
+                vectors = [self._embed_one(d, role="document") for d in batch]
             scores.extend(_cosine(q_vec, vec) for vec in vectors)
         return scores
 
-    def _embed_one(self, text: str) -> list[float]:
+    def _embed_one(self, text: str, role: str = "document") -> list[float]:
         """Embed a single text, shrinking it if the server rejects the length.
 
         A silent 0.0 score for a document that never embeds is preferable to
@@ -133,7 +135,7 @@ class EmbeddingRetriever(Retriever):
         size = self.max_chars
         for _ in range(4):
             try:
-                return self.llm.embed([text[:size]])[0]
+                return self.llm.embed([text[:size]], role=role)[0]
             except LLMError:
                 size //= 2
                 if size < 50:

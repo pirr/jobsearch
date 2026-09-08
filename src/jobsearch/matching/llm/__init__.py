@@ -20,11 +20,15 @@ def build_llm(config: Config) -> LLMClient:
         return OllamaClient(
             config.ollama_host, config.ollama_model, config.ollama_embed_model,
             timeout=config.llm_timeout,
+            embed_query_prefix=config.embed_query_prefix,
+            embed_document_prefix=config.embed_document_prefix,
         )
     if backend == "llamacpp":
         return LlamaCppClient(
             config.llamacpp_host, config.llamacpp_model, config.llamacpp_embed_model or None,
             timeout=config.llm_timeout,
+            embed_query_prefix=config.embed_query_prefix,
+            embed_document_prefix=config.embed_document_prefix,
         )
     if backend == "anthropic":
         from .anthropic_client import AnthropicClient
@@ -49,10 +53,14 @@ def build_embedder(config: Config) -> LLMClient:
         return LlamaCppClient(
             config.llamacpp_host, config.llamacpp_model, config.llamacpp_embed_model or None,
             timeout=config.llm_timeout,
+            embed_query_prefix=config.embed_query_prefix,
+            embed_document_prefix=config.embed_document_prefix,
         )
     if backend == "fake":
         return FakeLLM()
     return OllamaClient(
         config.ollama_host, config.ollama_model, config.ollama_embed_model,
         timeout=config.llm_timeout,
+        embed_query_prefix=config.embed_query_prefix,
+        embed_document_prefix=config.embed_document_prefix,
     )

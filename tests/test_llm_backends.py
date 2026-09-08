@@ -168,7 +168,8 @@ def test_llamacpp_complete_json_salvages_prose_wrapped_output(monkeypatch):
 def test_llamacpp_embed_uses_openai_embeddings_shape_and_reorders_by_index(monkeypatch):
     def fake_post(url, timeout=None, json=None):
         assert url == "http://x:8080/v1/embeddings"
-        assert json["input"] == ["a", "b"]
+        # role defaults to "document" -- the default prefix is expected here.
+        assert json["input"] == ["search_document: a", "search_document: b"]
         # Server returns them out of order; the client must not assume order.
         return _FakeResponse({"data": [
             {"index": 1, "embedding": [0.2]},
@@ -178,6 +179,69 @@ def test_llamacpp_embed_uses_openai_embeddings_shape_and_reorders_by_index(monke
     monkeypatch.setattr(httpx, "post", fake_post)
     vectors = LlamaCppClient("http://x:8080").embed(["a", "b"])
     assert vectors == [[0.1], [0.2]]
+
+
+def test_llamacpp_embed_uses_the_query_prefix_for_query_role(monkeypatch):
+    captured = {}
+
+    def fake_post(url, timeout=None, json=None):
+        captured["input"] = json["input"]
+        return _FakeResponse({"data": [{"index": 0, "embedding": [0.1]}]})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    LlamaCppClient("http://x:8080").embed(["cv text"], role="query")
+    assert captured["input"] == ["search_query: cv text"]
+
+
+def test_llamacpp_embed_prefixes_are_overridable(monkeypatch):
+    captured = {}
+
+    def fake_post(url, timeout=None, json=None):
+        captured["input"] = json["input"]
+        return _FakeResponse({"data": [{"index": 0, "embedding": [0.1]}]})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    client = LlamaCppClient(
+        "http://x:8080", embed_query_prefix="", embed_document_prefix="passage: "
+    )
+    client.embed(["a"], role="query")
+    assert captured["input"] == ["a"]
+    client.embed(["b"])  # role defaults to "document"
+    assert captured["input"] == ["passage: b"]
+
+
+def test_ollama_embed_uses_role_appropriate_prefix(monkeypatch):
+    captured = {}
+
+    def fake_post(url, timeout=None, json=None):
+        assert url == "http://x:11434/api/embed"
+        captured["input"] = json["input"]
+        return _FakeResponse({"embeddings": [[0.1]]})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    client = OllamaClient("http://x:11434", "llama3.1:8b", "nomic-embed-text")
+    client.embed(["cv text"], role="query")
+    assert captured["input"] == ["search_query: cv text"]
+    client.embed(["job text"], role="document")
+    assert captured["input"] == ["search_document: job text"]
+
+
+def test_build_llm_and_build_embedder_pass_configured_embed_prefixes():
+    config = Config(
+        llm_backend="ollama",
+        embed_query_prefix="Q: ",
+        embed_document_prefix="D: ",
+    )
+    embedder = build_embedder(config)
+    assert embedder.embed_query_prefix == "Q: "
+    assert embedder.embed_document_prefix == "D: "
+
+    llamacpp_config = Config(
+        llm_backend="llamacpp", embed_query_prefix="Q: ", embed_document_prefix="D: "
+    )
+    llamacpp_embedder = build_embedder(llamacpp_config)
+    assert llamacpp_embedder.embed_query_prefix == "Q: "
+    assert llamacpp_embedder.embed_document_prefix == "D: "
 
 
 def test_llamacpp_embed_error_names_the_missing_flag(monkeypatch):

@@ -470,12 +470,71 @@ class _ContextLimitedLLM:
         self.limit = limit
         self.batch_calls = []
 
-    def embed(self, texts):
+    def embed(self, texts, *, role="document"):
         self.batch_calls.append(len(texts))
         if any(len(t) > self.limit for t in texts):
             from jobsearch.matching.llm.base import LLMError
             raise LLMError("exceeds context size")
         return [[float(len(t))] for t in texts]
+
+
+class _RoleRecordingLLM:
+    """Records which role each embed() call was made with, so rank()'s query
+    vs. document handling (including the per-item fallback path) can be
+    checked without a real embedding model."""
+
+    name = "role-recording"
+
+    def __init__(self):
+        self.roles: list[tuple[str, str]] = []  # (text, role)
+
+    def embed(self, texts, *, role="document"):
+        self.roles.extend((t, role) for t in texts)
+        return [[float(len(t))] for t in texts]
+
+
+def test_embedding_retriever_embeds_query_and_documents_with_the_right_role():
+    from jobsearch.matching.retrieval import EmbeddingRetriever
+
+    llm = _RoleRecordingLLM()
+    retriever = EmbeddingRetriever(llm, batch_size=10)
+
+    retriever.rank("my cv", ["doc one", "doc two"])
+
+    assert ("my cv", "query") in llm.roles
+    assert ("doc one", "document") in llm.roles
+    assert ("doc two", "document") in llm.roles
+    assert not any(role == "query" for text, role in llm.roles if text != "my cv")
+
+
+class _RoleRecordingContextLimitedLLM(_RoleRecordingLLM):
+    """Combines _ContextLimitedLLM's failure behavior with role recording, to
+    confirm the shrink-retry fallback path also embeds with role="document"."""
+
+    def __init__(self, limit=200):
+        super().__init__()
+        self.limit = limit
+
+    def embed(self, texts, *, role="document"):
+        vectors = super().embed(texts, role=role)
+        if any(len(t) > self.limit for t in texts):
+            from jobsearch.matching.llm.base import LLMError
+            raise LLMError("exceeds context size")
+        return vectors
+
+
+def test_embedding_retriever_fallback_path_also_uses_document_role():
+    from jobsearch.matching.retrieval import EmbeddingRetriever
+
+    llm = _RoleRecordingContextLimitedLLM(limit=200)
+    retriever = EmbeddingRetriever(llm, batch_size=10, max_chars=1500)
+    docs = ["short doc"] * 3 + ["x" * 1000]  # forces the batch call to fail
+
+    retriever.rank("query", docs)
+
+    doc_roles = {role for text, role in llm.roles if text != "query"}
+    assert doc_roles == {"document"}
+    assert ("query", "query") in llm.roles
 
 
 def test_embedding_retriever_falls_back_per_item_on_batch_context_error():
