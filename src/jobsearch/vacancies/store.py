@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE INDEX IF NOT EXISTS idx_profiles_hash ON profiles(profile_hash);
 """
 
-VALID_STATUSES = ("seen", "dismissed", "applied")
+VALID_STATUSES = ("seen", "dismissed", "applied", "closed")
 
 
 def _now() -> str:
@@ -181,6 +181,32 @@ class Store:
             self.conn.execute(f"SELECT * FROM vacancies WHERE id IN ({marks})", tuple(ids))
         )
 
+    def close_missing_vacancies(
+        self, source: str, company: str, present_source_ids: set[str]
+    ) -> int:
+        """Mark vacancies closed if a fresh fetch no longer returns them.
+
+        Scoped to one (source, company) at a time -- the caller (ingest) is
+        the one that just fetched that company's current live listing and
+        knows exactly which ids it contains. Skips anything already `applied`
+        or `closed`: applying is a fact worth keeping even after a role
+        closes, not something a later disappearance should silently erase.
+        Returns how many were newly marked.
+        """
+        rows = self.conn.execute(
+            """
+            SELECT v.id, v.source_id FROM vacancies v
+            LEFT JOIN vacancy_status s ON s.vacancy_id = v.id
+            WHERE v.source = ? AND v.company = ?
+              AND COALESCE(s.status, 'new') NOT IN ('applied', 'closed')
+            """,
+            (source, company),
+        )
+        gone = [r["id"] for r in rows if r["source_id"] not in present_source_ids]
+        for vacancy_id in gone:
+            self.set_status(vacancy_id, "closed")
+        return len(gone)
+
     # ---- ratings -------------------------------------------------------
 
     def rated_ids(self, profile_hash: str) -> set[str]:
@@ -232,21 +258,35 @@ class Store:
         )
         self.conn.commit()
 
-    def ranked(self, profile_hash: str, threshold: int, limit: int) -> list[sqlite3.Row]:
+    def ranked(
+        self, profile_hash: str, threshold: int, limit: int, *, only_status: str | None = None
+    ) -> list[sqlite3.Row]:
+        """Ranked vacancies for this profile.
+
+        By default excludes `dismissed` and `closed` (the two statuses that
+        mean "not a real option any more"). Pass `only_status` to flip that
+        around and see just that one bucket instead -- e.g. `show --closed`.
+        """
+        if only_status:
+            status_clause = "COALESCE(s.status,'new') = ?"
+            params = (profile_hash, threshold, only_status, limit)
+        else:
+            status_clause = "COALESCE(s.status,'new') NOT IN ('dismissed', 'closed')"
+            params = (profile_hash, threshold, limit)
         return list(
             self.conn.execute(
-                """
+                f"""
                 SELECT v.*, r.score, r.verdict, r.matched_skills, r.missing_skills,
                        r.hard_blockers, r.model, COALESCE(s.status,'new') AS status
                 FROM ratings r
                 JOIN vacancies v ON v.id = r.vacancy_id
                 LEFT JOIN vacancy_status s ON s.vacancy_id = v.id
                 WHERE r.profile_hash = ? AND r.failed = 0 AND r.score >= ?
-                  AND COALESCE(s.status,'new') != 'dismissed'
+                  AND {status_clause}
                 ORDER BY r.score DESC
                 LIMIT ?
                 """,
-                (profile_hash, threshold, limit),
+                params,
             )
         )
 

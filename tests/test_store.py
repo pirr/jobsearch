@@ -38,6 +38,66 @@ def test_dismissed_vacancies_leave_the_pipeline(store):
     assert store.all_vacancies(exclude_dismissed=True) == []
 
 
+def test_closed_vacancies_are_excluded_from_ranked_by_default(store):
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    store.save_rating(v.id, "h", "fake", score=95, verdict="strong")
+    assert len(store.ranked("h", 60, 10)) == 1
+    store.set_status(v.id, "closed")
+    assert store.ranked("h", 60, 10) == []
+    assert store.ranked("h", 60, 10, only_status="closed")[0]["id"] == v.id
+
+
+def test_close_missing_vacancies_marks_gone_ones_closed(store):
+    v1 = make_vacancy(source_id="1", title="Role One")
+    v2 = make_vacancy(source_id="2", title="Role Two")
+    store.upsert_vacancies([v1, v2])
+    store.save_rating(v1.id, "h", "f", score=80)
+    store.save_rating(v2.id, "h", "f", score=80)
+
+    closed = store.close_missing_vacancies("test", "Acme", present_source_ids={"1"})
+
+    assert closed == 1
+    assert [r["title"] for r in store.ranked("h", 0, 10)] == ["Role One"]
+    assert store.ranked("h", 0, 10, only_status="closed")[0]["title"] == "Role Two"
+
+
+def test_close_missing_vacancies_never_overwrites_applied(store):
+    """Applying is worth knowing even after a role closes -- a later
+    disappearance from the source must not silently erase it."""
+    v = make_vacancy(source_id="1")
+    store.upsert_vacancies([v])
+    store.set_status(v.id, "applied")
+
+    closed = store.close_missing_vacancies("test", "Acme", present_source_ids=set())
+
+    assert closed == 0
+    store.save_rating(v.id, "h", "f", score=80)
+    assert store.ranked("h", 0, 10)[0]["status"] == "applied"
+
+
+def test_close_missing_vacancies_is_idempotent(store):
+    v = make_vacancy(source_id="1")
+    store.upsert_vacancies([v])
+    first = store.close_missing_vacancies("test", "Acme", present_source_ids=set())
+    second = store.close_missing_vacancies("test", "Acme", present_source_ids=set())
+    assert first == 1
+    assert second == 0  # already closed, not re-counted
+
+
+def test_close_missing_vacancies_scoped_to_source_and_company(store):
+    other_company = make_vacancy(source_id="1", company="OtherCo", title="Other Co Role")
+    target = make_vacancy(source_id="1", company="Acme", title="Acme Role")
+    store.upsert_vacancies([other_company, target])
+
+    closed = store.close_missing_vacancies("test", "Acme", present_source_ids=set())
+
+    assert closed == 1
+    store.save_rating(other_company.id, "h", "f", score=80)
+    store.save_rating(target.id, "h", "f", score=80)
+    assert store.ranked("h", 0, 10, only_status="closed")[0]["title"] == "Acme Role"
+
+
 def test_ranked_respects_threshold_and_order(store):
     lo, hi = make_vacancy(title="Low", description="a"), make_vacancy(title="High", description="b")
     store.upsert_vacancies([lo, hi])

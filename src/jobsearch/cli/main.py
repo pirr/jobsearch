@@ -136,7 +136,11 @@ def ingest_cmd(
 
         def show(result):
             if result.ok:
-                console.print(f"  [green]ok[/]   {result.label:28} {result.fetched:4} fetched, {result.new:4} new")
+                closed_note = f", {result.closed} closed" if result.closed else ""
+                console.print(
+                    f"  [green]ok[/]   {result.label:28} {result.fetched:4} fetched, "
+                    f"{result.new:4} new{closed_note}"
+                )
             else:
                 console.print(f"  [red]fail[/] {result.label:28} {result.error[:70]}")
 
@@ -145,10 +149,13 @@ def ingest_cmd(
 
     ok = sum(1 for r in results if r.ok)
     failed = [r for r in results if not r.ok]
+    total_closed = sum(r.closed for r in results)
     console.print(
         f"\n[bold]{ok}/{len(results)} sources ok[/] -- "
         f"{after - before} new, {after:,} vacancies stored"
     )
+    if total_closed:
+        console.print(f"[dim]{total_closed} previously-seen posting(s) no longer listed -- marked closed[/]")
     if failed:
         console.print(f"[yellow]{len(failed)} source(s) failed[/] (run `jobsearch doctor` for detail)")
 
@@ -233,6 +240,10 @@ def show(
         help="asc|desc -- score order. asc ends with the best match, "
              "the part visible without scrolling up in a terminal.",
     ),
+    closed: bool = typer.Option(
+        False, "--closed",
+        help="Show only vacancies no longer listed by the source, instead of the usual live ones.",
+    ),
 ):
     """Show ranked vacancies."""
     if sort not in ("asc", "desc"):
@@ -245,11 +256,17 @@ def show(
     cutoff = config.score_threshold if threshold is None else threshold
 
     with _store() as store:
-        rows = store.ranked(candidate.hash(), cutoff, limit)  # score DESC, best first
+        # score DESC, best first
+        rows = store.ranked(
+            candidate.hash(), cutoff, limit, only_status="closed" if closed else None
+        )
         failed = store.failed_ratings(candidate.hash())
 
     if not rows:
-        console.print(f"nothing scored at or above {cutoff}. Try --threshold 40, or `jobsearch match`.")
+        if closed:
+            console.print(f"nothing marked closed at or above {cutoff}.")
+        else:
+            console.print(f"nothing scored at or above {cutoff}. Try --threshold 40, or `jobsearch match`.")
         raise typer.Exit(0)
 
     if sort == "asc":

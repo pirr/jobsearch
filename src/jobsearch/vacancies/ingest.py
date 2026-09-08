@@ -36,6 +36,7 @@ class SourceResult:
     fetched: int = 0
     new: int = 0
     updated: int = 0
+    closed: int = 0
     error: str | None = None
 
 
@@ -101,8 +102,23 @@ async def _run_one(
     # writes are serialized while fetches stay parallel.
     async with lock:
         new, updated = store.upsert_vacancies(vacancies)
+        closed = 0
+        # Only company-scoped sources (Greenhouse/Lever/Ashby) fetch one
+        # company's complete live listing per call, so only they can safely
+        # say "anything stored here and missing from this fetch is gone" --
+        # a breadth source (Arbeitnow/RemoteOK/Jobicy) covers many companies
+        # per call and has no single company to diff against. An empty fetch
+        # is skipped too: with no fetched vacancy to read a company name from,
+        # there is no safe way to scope which stored rows even belong to it.
+        company = getattr(source, "company", None)
+        if vacancies and company is not None:
+            closed = store.close_missing_vacancies(
+                source.name, vacancies[0].company, {v.source_id for v in vacancies}
+            )
         store.finish_run(run_id, ok=True, count=len(vacancies))
-    return SourceResult(label, ok=True, fetched=len(vacancies), new=new, updated=updated)
+    return SourceResult(
+        label, ok=True, fetched=len(vacancies), new=new, updated=updated, closed=closed
+    )
 
 
 async def ingest(

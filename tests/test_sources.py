@@ -1,8 +1,12 @@
 """Adapters run against payloads recorded from the live APIs."""
 
+import asyncio
+
 import pytest
 from conftest import FakeClient, fixture
 
+from jobsearch.vacancies.dedupe import vacancy_id
+from jobsearch.vacancies.ingest import _run_one
 from jobsearch.vacancies.sources.arbeitnow import ArbeitnowSource
 from jobsearch.vacancies.sources.ats import AshbySource, GreenhouseSource, LeverSource
 from jobsearch.vacancies.sources.base import SourceError
@@ -83,3 +87,46 @@ async def test_404_is_not_retried():
     with pytest.raises(SourceError):
         await AshbySource("gone").fetch(client)
     assert len(client.requests) == 1
+
+
+def _greenhouse_payload(job_ids):
+    return {"jobs": [
+        {
+            "id": jid, "title": f"Role {jid}", "company_name": "Acme",
+            "absolute_url": f"https://boards.greenhouse.io/acme/jobs/{jid}",
+            "location": {"name": "Berlin"}, "content": "<p>Do the work.</p>",
+        }
+        for jid in job_ids
+    ]}
+
+
+async def test_run_one_marks_a_vacancy_closed_when_a_later_fetch_omits_it(store):
+    """The mechanism behind ingest's closed-vacancy detection: two successive
+    fetches of the same company, the second missing a job the first had."""
+    source = GreenhouseSource("acme")
+    sem, lock = asyncio.Semaphore(1), asyncio.Lock()
+
+    await _run_one(source, FakeClient(_greenhouse_payload([1, 2])), store, sem, lock)
+    assert store.count_vacancies() == 2
+
+    result = await _run_one(source, FakeClient(_greenhouse_payload([1])), store, sem, lock)
+
+    assert result.closed == 1
+    gone_id = vacancy_id("Acme", "Role 2", "Berlin", "Do the work.")
+    stayed_id = vacancy_id("Acme", "Role 1", "Berlin", "Do the work.")
+    store.save_rating(gone_id, "h", "f", score=80)
+    store.save_rating(stayed_id, "h", "f", score=80)
+    assert [r["title"] for r in store.ranked("h", 0, 10)] == ["Role 1"]
+    assert store.ranked("h", 0, 10, only_status="closed")[0]["title"] == "Role 2"
+
+
+async def test_run_one_skips_the_closed_check_for_breadth_sources(store):
+    """Arbeitnow/RemoteOK/Jobicy cover many companies per call -- there is no
+    single company to diff against, so the check must not run for them."""
+    payload = fixture("arbeitnow")
+    payload["links"]["next"] = None
+    sem, lock = asyncio.Semaphore(1), asyncio.Lock()
+
+    result = await _run_one(ArbeitnowSource(), FakeClient(payload), store, sem, lock)
+
+    assert result.closed == 0
