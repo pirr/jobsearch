@@ -19,6 +19,7 @@ COPY src ./src
 RUN pip install --no-cache-dir --no-deps -e .
 
 COPY data ./data
+COPY scripts ./scripts
 
 ENTRYPOINT ["jobsearch"]
 CMD ["--help"]
