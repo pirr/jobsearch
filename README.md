@@ -72,18 +72,20 @@ party; `ollama` and `llamacpp` keep it local.
 ## Sources
 
 `data/companies.yaml` lists Greenhouse/Lever/Ashby company slugs verified live
-during design (Europe/DACH-leaning). Slugs rot — `jobsearch doctor` reports
-dead ones to prune.
+during design (Europe/DACH-leaning, plus a US/UK batch). Slugs rot —
+`jobsearch doctor` reports dead ones to prune.
 
-Three sources need no company list and cover many companies on their own:
-Arbeitnow (~2,000 active EU jobs), RemoteOK (global remote tech jobs) and
+Five sources need no company list and cover many companies on their own:
+Arbeitnow (~2,000 active EU jobs), RemoteOK (global remote tech jobs),
 Jobicy (queried with `geo=europe&industry=dev`, so only European engineering
-roles).
+roles), Himalayas (global remote jobs, structured per-job country
+restrictions, bounded cursor pagination) and Remotive (global remote jobs;
+its free API currently exposes only ~18 jobs, so it adds little volume).
 
 ## Tests
 
 ```bash
-pytest              # 83 tests, all offline (recorded fixtures, no network, no LLM)
+pytest              # 105 tests, all offline (recorded fixtures, no network, no LLM)
 ```
 
 `jobsearch eval` is not part of the suite — it measures retrieval quality
