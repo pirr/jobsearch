@@ -82,10 +82,18 @@ roles), Himalayas (global remote jobs, structured per-job country
 restrictions, bounded cursor pagination) and Remotive (global remote jobs;
 its free API currently exposes only ~18 jobs, so it adds little volume).
 
+A sixth, Adzuna, is optional: unlike the others it's a general job board (not
+remote-only) and needs a free App ID/Key from
+[developer.adzuna.com](https://developer.adzuna.com/signup) — set
+`JOBSEARCH_ADZUNA_APP_ID`/`JOBSEARCH_ADZUNA_APP_KEY` in `.env` to enable it
+(see `.env.example`); left unset, it's silently skipped. Queries
+`gb`/`us`/`de`/`fr`/`nl`/`pl` only — `ru` is never queried even if granted on
+the account, and Belarus isn't an Adzuna market at all.
+
 ## Tests
 
 ```bash
-pytest              # 105 tests, all offline (recorded fixtures, no network, no LLM)
+pytest              # 110 tests, all offline (recorded fixtures, no network, no LLM)
 ```
 
 `jobsearch eval` is not part of the suite — it measures retrieval quality
