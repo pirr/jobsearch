@@ -10,8 +10,10 @@ from jobsearch.vacancies.ingest import _run_one
 from jobsearch.vacancies.sources.arbeitnow import ArbeitnowSource
 from jobsearch.vacancies.sources.ats import AshbySource, GreenhouseSource, LeverSource
 from jobsearch.vacancies.sources.base import SourceError
+from jobsearch.vacancies.sources.himalayas import HimalayasSource
 from jobsearch.vacancies.sources.jobicy import JobicySource
 from jobsearch.vacancies.sources.remoteok import RemoteOkSource
+from jobsearch.vacancies.sources.remotive import RemotiveSource
 
 
 async def test_arbeitnow_normalizes_double_escaped_html():
@@ -73,6 +75,30 @@ async def test_jobicy_requests_european_dev_roles():
     assert "<" not in v.description[:200]
     _, params = client.requests[0]
     assert params["geo"] == "europe" and params["industry"] == "dev"
+
+
+async def test_remotive_is_always_remote():
+    vacancies = await RemotiveSource().fetch(FakeClient(fixture("remotive")))
+    assert vacancies
+    v = vacancies[0]
+    assert v.source == "remotive" and v.company and v.title and v.url
+    assert v.is_remote is True
+    assert "<" not in v.description[:200]
+
+
+async def test_himalayas_uses_guid_as_source_id_and_stops_without_cursor():
+    # The fixture's nextCursor is None, so a single page must be fetched even
+    # though max_pages defaults higher -- there is no numeric "id" field on a
+    # Himalayas job, unlike every other source, so guid (a stable URL) is used.
+    client = FakeClient(fixture("himalayas"))
+    vacancies = await HimalayasSource().fetch(client)
+    assert vacancies
+    v = vacancies[0]
+    assert v.source == "himalayas" and v.company and v.title
+    assert v.source_id == v.raw["guid"]
+    assert v.is_remote is True
+    assert "<" not in v.description[:200]
+    assert len(client.requests) == 1
 
 
 async def test_dead_slug_raises_rather_than_returning_empty():

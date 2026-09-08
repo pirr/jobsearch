@@ -54,6 +54,17 @@ greenhouse:
   - truelayer
   - typeform
   - wolt
+  # verified live 2026-09-08 (US/UK remote-friendly boards)
+  - gitlab                 # fully remote company
+  - elastic                # fully distributed company
+  - webflow                # remote-first
+  - figma
+  - airtable
+  - discord
+  - coinbase                # remote-first policy since 2020
+  - reddit
+  - cloudflare
+  - doximity
   # verified live 2026-09-07 (hiring-without-whiteboards, US-heavy unless noted)
   - able
   - axios
@@ -87,6 +98,8 @@ lever:
   - jobandtalent
   - malt
   - swile
+  # verified live 2026-09-08 (US/UK remote-friendly boards)
+  - palantir               # includes London postings
   # verified live 2026-09-07 (hiring-without-whiteboards, US-heavy unless noted)
   - BDG                    # Bustle
   - collabora
@@ -117,6 +130,12 @@ ashby:
   - swan
   - tacto
   - upvest
+  # verified live 2026-09-08 (US/UK remote-friendly boards)
+  - linear                 # fully remote
+  - ramp
+  - watershed
+  - notion
+  - persona
   # verified live 2026-09-07 (hiring-without-whiteboards, US-heavy unless noted)
   - Almabase
   - clarisights

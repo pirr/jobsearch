@@ -1,0 +1,103 @@
+{
+  "updatedAt": 1788870411,
+  "offset": 0,
+  "limit": 3,
+  "totalCount": 105275,
+  "nextCursor": null,
+  "jobs": [
+    {
+      "title": "Community Assistant (Future Trainee Solicitor)",
+      "excerpt": "BackgroundAt TCLA, we’re building the home of the world’s best legal talent.",
+      "companyName": "The Corporate Law Academy",
+      "companySlug": "the-corporate-law-academy",
+      "companyLogo": "https://cdn-images.himalayas.app/wbohurzd7y3kdql5hn61botuxc6e",
+      "employmentType": "Full Time",
+      "minSalary": 32500,
+      "maxSalary": 32500,
+      "salaryPeriod": "annual",
+      "seniority": [
+        "Entry-level"
+      ],
+      "currency": "GBP",
+      "locationRestrictions": [
+        "United Kingdom"
+      ],
+      "timezoneRestrictions": [
+        0
+      ],
+      "categories": [
+        "Community-Management",
+        "Legal-Community-Management",
+        "Student-Services",
+        "Content-Moderation",
+        "Trainee-Solicitor",
+        "Solicitor-Trainee",
+        "Community-Care-Assistant",
+        "Community-Engagement-Assistant",
+        "Community-Outreach-Assistant",
+        "Junior-Legal-Assistant",
+        "Trainee-Lawyer",
+        "Legal-Trainee",
+        "Legal-Assistant",
+        "Legal"
+      ],
+      "parentCategories": [
+        "Legal"
+      ],
+      "description": "<div class=\"description\">\n<h3><strong><strong>Background</strong></strong></h3>\n<p>At TCLA, we’re building the home of the world’s best legal talent<strong>.</strong></p>\n<p>This is made up of two parts: technology and community.</p>\n<p>As a Community Assistant, you will be the backbone of the community. </p>\n<p>That means acting as the central point of contact for thousands of students.</p>\n<h3><strong>Roles and Responsibilities</strong></h3>\n<h3>The TCLA forum is completely free.</h3>\n<p>Up to 75,000 students and graduates each year use it to get access to high quality information to understand how to pursue a legal career, while law firms use the forum to attract the most talented applicants.</p>\n<p> Across our Forum and WhatsApp groups, you’ll be responsible for:</p>\n<ul>\n<li>Responding to questions</li>\n<li>Moderating content</li>\n<li>Writing threads</li>\n<li>Launching giveaways</li>\n<li>Maintaining our deadlines and lists</li>\n<li>Managing the SQE and Future Trainees group chat, and </li>\n<li>Supporting the creation of other resources such as Application Guides.</li>\n</ul>\n<h3><strong>What We Look For</strong></h3>\n<p>You will be a future trainee with a 1 year gap before starting at your law firm. Ideally, you will have completed the SQE. </p>\n<p>A successful applicant will have the following:</p>\n<ol>\n<li>A very high standard of writing</li>\n<li>An ability to deliver specific written communication</li>\n<li>A deep understanding of multiple law firm processes</li>\n<li>A supportive tone and deep empathy about the challenges of the law firm process</li>\n<li>A high level of responsiveness</li>\n<li>Strong organisation skills</li>\n</ol>\n<h3><strong><strong>Further Details</strong></strong></h3>\n<p>This role is full time and fully remote. </p>\n<h3>Apply by: 13 September 2026</h3>\n<h3>Start Date: 5 October 2026</h3>\n<p>Applications are reviewed on a rolling basis. The next stage is a written exercise followed by a virtual interview. <br></p>\n</div>Salary: £32,500+ / year<p>Originally posted on <a href=\"https://himalayas.app\">Himalayas</a></p>",
+      "pubDate": 1788870411,
+      "expiryDate": 1794054409,
+      "applicationLink": "https://himalayas.app/companies/the-corporate-law-academy/jobs/community-assistant-future-trainee-solicitor",
+      "guid": "https://himalayas.app/companies/the-corporate-law-academy/jobs/community-assistant-future-trainee-solicitor"
+    },
+    {
+      "title": "Mid-Level Software Engineer – Ruby/Rails",
+      "excerpt": "ABOUT VICTORY LIVE Victory Live is a private equity backed technology company aimed at maximizing distribution and yield for live event ticket inventory.",
+      "companyName": "Victory Live",
+      "companySlug": "victory-live",
+      "companyLogo": "https://cdn-images.himalayas.app/905jnt4c7m8jo8gon1nvh2p2cdeq",
+      "employmentType": "Full Time",
+      "minSalary": null,
+      "maxSalary": null,
+      "salaryPeriod": "annual",
+      "seniority": [
+        "Mid-level"
+      ],
+      "currency": null,
+      "locationRestrictions": [
+        "United States"
+      ],
+      "timezoneRestrictions": [
+        -10,
+        -9,
+        -8,
+        -7,
+        -6,
+        -5,
+        14
+      ],
+      "categories": [
+        "Software-Engineer",
+        "Ruby-on-Rails-Development",
+        "Backend-Engineering",
+        "Web-Development",
+        "Fullstack-Development",
+        "Mid-Level-Ruby-Backend-Engineer",
+        "Mid-Level-Software-Engineer",
+        "Ruby-On-Rails-Engineer",
+        "Intermediate-Software-Development-Engineer",
+        "Mid-Level-Full-Stack-Software-Engineer",
+        "Remote-Mid-Level-Software-Engineer",
+        "Developer"
+      ],
+      "parentCategories": [
+        "Developer"
+      ],
+      "description": "<p><b>ABOUT VICTORY LIVE</b><br><a href=\"https://himalayas.app/companies/victory-live\">Victory Live</a> is a private equity backed technology company aimed at maximizing distribution and yield for live event ticket inventory. We provide an end-to-end software platform for the live ticketing industry, managing thousands of sports, theater, and live music event tickets on behalf of artists, promoters, teams, venues, and professional resellers. <a href=\"https://himalayas.app/companies/victory-live\">Victory Live</a>’s comprehensive offerings include an established B2B marketplace, along with both a full-service and an automated SaaS platform to handle all elements of the ticket sales lifecycle, from ingestion to sales fulfillment.</p><p><b>THE POSITION</b><br><a href=\"https://himalayas.app/companies/victory-live\">Victory Live</a> is looking for a Mid-Level Software Engineer to build and maintain features across our Ruby on Rails and Hanami services. You'll own well-scoped pieces of our B2B marketplace and ticketing platform end to end, from design through production, working closely with senior engineers who'll help you level up.</p><h3>RESPONSIBILITIES</h3><ul>\n<li>\n<b>Ship features.</b> Build and maintain services in Rails and Hanami, from a scoped design through code review to production.</li>\n<li>\n<b>Write tests that hold.</b> Cover your code with RSpec so regressions show up in CI, not in production.</li>\n<li>\n<b>Debug production issues.</b> Use logs, metrics, and Rails console access to trace bugs to root cause.</li>\n<li>\n<b>Work within our data layer.</b> Write efficient ActiveRecord queries and migrations that don't lock production tables.</li>\n<li>\n<b>Handle background work.</b> Build and monitor Sidekiq jobs for async processing.</li>\n<li>\n<b>Take code review seriously.</b> Review teammates' PRs and act on the feedback you get on your own.</li>\n<li>\n<b>Use AI tooling daily.</b> Pair with Claude Code and Copilot for scaffolding, tests, and debugging, and learn where to trust them and where not to.</li>\n</ul><h3>REQUIREMENTS</h3><ul>\n<li>2–4 years building production software, with at least 1–2 years in Ruby on Rails.</li>\n<li>Comfortable writing and debugging ActiveRecord queries, migrations, and background jobs.</li>\n<li>Solid grasp of RSpec and test-driven development.</li>\n<li>Working knowledge of REST APIs and relational databases.</li>\n<li>Growing but genuine use of AI tooling in your day-to-day workflow.</li>\n</ul><h3>PREFERRED QUALIFICATIONS</h3><ul>\n<li>Exposure to Hanami or another Ruby framework beyond Rails.</li>\n<li>Familiarity with Sidekiq, Redis, or Kafka.</li>\n<li>Interest in ticketing, marketplaces, or high-transaction consumer platforms.</li>\n</ul><h3>WHY VICTORY LIVE</h3><ul>\n<li>You'll build the infrastructure live events run on; millions of tickets, hundreds of venues, many of the largest teams and events in the world.</li>\n<li>A lean team where decisions move fast and your code reaches real fans, often the same week.</li>\n<li>Every release has stakes. Every improvement is felt.</li>\n<li>High expectations, low tolerance for politics, and a culture built on writing well and shipping with care.</li>\n</ul><p><b>OUR VALUES</b><br>We build the systems that power live event ticketing, and we hold a high bar for how we do it. Four principles run through everything:</p><ul>\n<li>\n<b>Quality of life.</b> Sustainable processes over heroics. Nobody should be a single point of failure, and nobody should be afraid to take a vacation.</li>\n<li>\n<b>Quality of code.</b> Clarity over cleverness. If a teammate needs a long explanation to follow your code, it needs simplifying. Tests prove your work; they aren't optional.</li>\n<li>\n<b>Protection of production.</b> Every change is reviewed, tested, and observable. We build with monitoring in mind from day one so we find problems before our users do.</li>\n<li>\n<b>Shared knowledge.</b> We work across time zones, so we communicate in the open. Questions go in channels, not DMs, and one answer becomes shared knowledge.</li>\n</ul><p><b>ENGINEERING PRINCIPLES</b><br>We are an AI-native engineering team. Here is what that looks like in practice:</p><ul>\n<li>\n<b>AI-assisted engineering.</b> Every engineer uses Claude, Claude Code, Copilot, and agentic tooling as a routine part of their workflow.</li>\n<li>\n<b>Async-first.</b> Most decisions happen in writing through Jira, Confluence, PR descriptions, design docs. We over-communicate on changes and under-communicate on noise.</li>\n<li>\n<b>Ownership mindset.</b> Engineers are responsible for what they write and no code reaches production without review. Reviewers are co-owners.</li>\n<li>\n<b>Observability is part of \"done.\"</b> If the on-call engineer can't understand a system without reading source, more logging, metrics, and dashboards are needed.</li>\n<li>\n<b>Preservation of quality of code and life.</b> We write code that is clean, tested, and maintainable so it serves us well over time, and we build sustainable processes so no one burns out or becomes a single point of failure.</li>\n<li>\n<b>Shared knowledge and continued education.</b> We grow as a team by learning from each other through reviews, documentation, and collaboration.</li>\n</ul><h3>OUR STACK &amp; WAYS OF WORKING</h3><ul>\n<li>Ruby on Rails and Hanami power our B2B marketplace, distribution integrations, and partner-facing APIs</li>\n<li>Web &amp; mobile clients, REST APIs, microservices</li>\n<li>Frameworks and tools: Rails, Hanami, Sidekiq, Puma, ActiveRecord, RSpec, RuboCop</li>\n<li>Data: Postgres, Redis, Kafka</li>\n<li>Cloud &amp; infra: AWS (RDS, ElastiCache, CloudSearch, EKS, MSK), Kubernetes, Helm, Kong, Terraform, Docker</li>\n<li>AI tooling: Anthropic / Claude Code, GitHub Copilot, in-house agentic workflows</li>\n<li>Observability: Datadog, Grafana, Elastic/Kibana, OpsGenie</li>\n<li>Collaboration: Jira, Confluence, GitHub, Slack, Miro</li>\n<li>Async-first, agile cadences, distributed onshore + offshore teams</li>\n</ul><h3>BENEFITS &amp; PERKS</h3><ul>\n<li>Comprehensive medical coverage</li>\n<li>100% employer-paid dental, vision, life, and disability insurance</li>\n<li>401(k) with company match</li>\n<li>Paid parental leave</li>\n<li>Paid time off and company holidays</li>\n<li>Employee wellness and professional development opportunities</li>\n</ul><p><a href=\"https://himalayas.app/companies/victory-live\">Victory Live</a> is an equal opportunity employer. We are committed to equal employment opportunity regardless of race, color, ethnicity, ancestry, religion, creed, sex, national origin, sexual orientation, age, citizenship status, marital status, disability, gender identity, gender expression, Veteran status, or another other characteristic protected by state, local or federal law.</p><p>Originally posted on <a href=\"https://himalayas.app\">Himalayas</a></p>",
+      "pubDate": 1788870382,
+      "expiryDate": 1794054381,
+      "applicationLink": "https://himalayas.app/companies/victory-live/jobs/mid-level-software-engineer-ruby-rails",
+      "guid": "https://himalayas.app/companies/victory-live/jobs/mid-level-software-engineer-ruby-rails"
+    }
+  ]
+}

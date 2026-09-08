@@ -18,15 +18,19 @@ from ..config import Config
 from .sources.arbeitnow import ArbeitnowSource
 from .sources.ats import ATS_SOURCES
 from .sources.base import SourceError, VacancySource
+from .sources.himalayas import HimalayasSource
 from .sources.jobicy import JobicySource
 from .sources.remoteok import RemoteOkSource
+from .sources.remotive import RemotiveSource
 from .store import Store
 
 USER_AGENT = "jobsearch-mvp/0.1 (+https://github.com/local/jobsearch)"
 
 # Breadth sources: no company list needed, each covers many companies on its
 # own. Depth (ATS) sources come from data/companies.yaml instead.
-BREADTH_SOURCES: list[type[VacancySource]] = [ArbeitnowSource, RemoteOkSource, JobicySource]
+BREADTH_SOURCES: list[type[VacancySource]] = [
+    ArbeitnowSource, RemoteOkSource, JobicySource, HimalayasSource, RemotiveSource,
+]
 
 
 @dataclass
