@@ -77,3 +77,24 @@ class FakeClient:
         if callable(payload):
             payload = payload(len(self.requests))
         return FakeResponse(payload, self.status_code)
+
+
+class FakeMultiClient:
+    """Like FakeClient, but keyed by a URL substring.
+
+    discover-ats probes several distinct ATS endpoints concurrently in one
+    run -- the only place so far needing more than one fake endpoint shape
+    per client instance.
+    """
+
+    def __init__(self, responses: dict[str, tuple[int, object]], default_status: int = 404):
+        self.responses = responses
+        self.default_status = default_status
+        self.requests = []
+
+    async def get(self, url, params=None):
+        self.requests.append((url, params))
+        for key, (status, payload) in self.responses.items():
+            if key in url:
+                return FakeResponse(payload, status)
+        return FakeResponse({}, self.default_status)

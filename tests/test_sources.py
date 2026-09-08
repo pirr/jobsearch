@@ -10,7 +10,12 @@ from jobsearch.vacancies.dedupe import vacancy_id
 from jobsearch.vacancies.ingest import _run_one, build_sources
 from jobsearch.vacancies.sources.adzuna import AdzunaSource
 from jobsearch.vacancies.sources.arbeitnow import ArbeitnowSource
-from jobsearch.vacancies.sources.ats import AshbySource, GreenhouseSource, LeverSource
+from jobsearch.vacancies.sources.ats import (
+    AshbySource,
+    GreenhouseSource,
+    LeverSource,
+    SmartRecruitersSource,
+)
 from jobsearch.vacancies.sources.base import SourceError
 from jobsearch.vacancies.sources.himalayas import HimalayasSource
 from jobsearch.vacancies.sources.jobicy import JobicySource
@@ -54,6 +59,36 @@ async def test_lever_concatenates_section_blocks():
     # Lever splits the body across `lists`; taking only `description` would
     # hand the rater the intro paragraph and nothing else.
     assert len(vacancies[0].description) > len(payload[0].get("descriptionPlain") or "")
+
+
+async def test_smartrecruiters_fetches_description_via_a_second_detail_call():
+    fx = fixture("smartrecruiters")
+
+    def payload(call_count):
+        return fx["list"] if call_count == 1 else fx["detail"]
+
+    client = FakeClient(payload)
+    vacancies = await SmartRecruitersSource("smartrecruiters").fetch(client)
+    assert len(client.requests) == 2  # one list call, one detail call
+    assert vacancies
+    v = vacancies[0]
+    assert v.source == "smartrecruiters" and v.company == "SmartRecruiters Inc"
+    # The live payload has a trailing space in "name": "Data Operations Consultant "
+    assert v.title == "Data Operations Consultant"
+    assert v.url.startswith("https://jobs.smartrecruiters.com/")
+    assert v.is_remote is True
+    assert v.location_country == "PL"
+    assert "<" not in v.description and len(v.description) > 100
+
+
+def test_build_sources_wires_smartrecruiters_from_companies_yaml(tmp_path):
+    path = tmp_path / "companies.yaml"
+    path.write_text("smartrecruiters:\n  - acme\n")
+    config = Config(companies_path=path)
+    sources = build_sources(config, only="smartrecruiters")
+    assert len(sources) == 1
+    assert isinstance(sources[0], SmartRecruitersSource)
+    assert sources[0].company == "acme"
 
 
 async def test_remoteok_skips_the_legal_notice_row():

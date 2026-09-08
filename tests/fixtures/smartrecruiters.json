@@ -1,0 +1,209 @@
+{
+  "list": {
+    "offset": 0,
+    "limit": 100,
+    "totalFound": 1,
+    "content": [
+      {
+        "id": "744000137413079",
+        "name": "Data Operations Consultant ",
+        "uuid": "ce2ba761-eff2-41f8-98b9-53b12094807c",
+        "jobAdId": "f9fbb59b-d9db-4c26-a4c9-959f920b370a",
+        "defaultJobAd": true,
+        "refNumber": "REF2025N",
+        "company": {
+          "identifier": "smartrecruiters",
+          "name": "SmartRecruiters Inc"
+        },
+        "releasedDate": "2026-07-13T09:50:21.127Z",
+        "location": {
+          "city": "Poland",
+          "region": "Remote",
+          "country": "pl",
+          "remote": true,
+          "hybrid": false,
+          "fullLocation": "Poland, Remote, Poland"
+        },
+        "industry": {
+          "id": "computer_software",
+          "label": "Computer Software"
+        },
+        "department": {
+          "id": "5408931",
+          "label": "Technical Services"
+        },
+        "function": {
+          "id": "information_technology",
+          "label": "Information Technology"
+        },
+        "typeOfEmployment": {
+          "id": "contract",
+          "label": "Contract"
+        },
+        "experienceLevel": {
+          "id": "associate",
+          "label": "Associate"
+        },
+        "customField": [
+          {
+            "fieldId": "58b7e4d6e4b0885c92cd98ee",
+            "fieldLabel": "Department",
+            "valueId": "5408931",
+            "valueLabel": "Technical Services"
+          },
+          {
+            "fieldId": "68f89f37181dbd53b2d51cc1",
+            "fieldLabel": "SAP Cost Center",
+            "valueId": "ccc63762-5f8e-43c3-b3e1-05a5ce9b24e1",
+            "valueLabel": "545000309"
+          },
+          {
+            "fieldId": "COUNTRY",
+            "fieldLabel": "Country/Region",
+            "valueId": "pl",
+            "valueLabel": "Poland"
+          },
+          {
+            "fieldId": "58b7e4d6e4b0885c92cd98eb",
+            "fieldLabel": "Brands",
+            "valueId": "default",
+            "valueLabel": "SmartRecruiters Inc"
+          },
+          {
+            "fieldId": "617043f52193e5503b7715c3",
+            "fieldLabel": "SR Cost Center",
+            "valueId": "e5f0ae46-b6d3-46ed-9607-12414b4c048e",
+            "valueLabel": "3.06 COGS Technical Services"
+          },
+          {
+            "fieldId": "627035b6330a2b4d25aa0882",
+            "fieldLabel": "Career Site Department Labels",
+            "valueId": "694b6ffd-b262-41ff-b6f7-18cc9c2354bd",
+            "valueLabel": "Technology"
+          }
+        ],
+        "visibility": "PUBLIC",
+        "ref": "https://api.smartrecruiters.com/v1/companies/smartrecruiters/postings/744000137413079",
+        "language": {
+          "code": "en",
+          "label": "English",
+          "labelNative": "English (US)"
+        }
+      }
+    ]
+  },
+  "detail": {
+    "id": "744000137413079",
+    "name": "Data Operations Consultant ",
+    "uuid": "ce2ba761-eff2-41f8-98b9-53b12094807c",
+    "jobId": "77d771c2-3c32-4eec-b9a1-9b7cd6684a16",
+    "jobAdId": "f9fbb59b-d9db-4c26-a4c9-959f920b370a",
+    "defaultJobAd": true,
+    "refNumber": "REF2025N",
+    "company": {
+      "name": "SmartRecruiters Inc",
+      "identifier": "smartrecruiters"
+    },
+    "location": {
+      "city": "Poland",
+      "region": "Remote",
+      "country": "pl",
+      "remote": true,
+      "hybrid": false,
+      "fullLocation": "Poland, Remote, Poland"
+    },
+    "customField": [
+      {
+        "fieldId": "58b7e4d6e4b0885c92cd98ee",
+        "fieldLabel": "Department",
+        "valueId": "5408931",
+        "valueLabel": "Technical Services"
+      },
+      {
+        "fieldId": "68f89f37181dbd53b2d51cc1",
+        "fieldLabel": "SAP Cost Center",
+        "valueId": "ccc63762-5f8e-43c3-b3e1-05a5ce9b24e1",
+        "valueLabel": "545000309"
+      },
+      {
+        "fieldId": "COUNTRY",
+        "fieldLabel": "Country/Region",
+        "valueId": "pl",
+        "valueLabel": "Poland"
+      },
+      {
+        "fieldId": "58b7e4d6e4b0885c92cd98eb",
+        "fieldLabel": "Brands",
+        "valueId": "default",
+        "valueLabel": "SmartRecruiters Inc"
+      },
+      {
+        "fieldId": "617043f52193e5503b7715c3",
+        "fieldLabel": "SR Cost Center",
+        "valueId": "e5f0ae46-b6d3-46ed-9607-12414b4c048e",
+        "valueLabel": "3.06 COGS Technical Services"
+      },
+      {
+        "fieldId": "627035b6330a2b4d25aa0882",
+        "fieldLabel": "Career Site Department Labels",
+        "valueId": "694b6ffd-b262-41ff-b6f7-18cc9c2354bd",
+        "valueLabel": "Technology"
+      }
+    ],
+    "releasedDate": "2026-07-13T09:50:21.127Z",
+    "creator": {
+      "name": "",
+      "avatarUrl": ""
+    },
+    "postingUrl": "https://jobs.smartrecruiters.com/smartrecruiters/744000137413079-data-operations-consultant-",
+    "applyUrl": "https://jobs.smartrecruiters.com/smartrecruiters/744000137413079-data-operations-consultant-?oga=true",
+    "referralUrl": "https://jobs.smartrecruiters.com/external-referrals/company/smartrecruiters/publication/ce2ba761-eff2-41f8-98b9-53b12094807c?dcr_ci=smartrecruiters",
+    "jobAd": {
+      "sections": {
+        "companyDescription": {
+          "title": "Company Description",
+          "text": "<p>SmartRecruiters powers Superhuman Hiring™ by freeing talent acquisition teams from legacy applicant tracking software and equipping them with next-gen AI functionality. SmartRecruiters' platform serves as the hiring operating system for 4,000 customers, including Bosch, LinkedIn, and Visa. Companies with business-critical hiring needs turn to SmartRecruiters for best-of-breed functionality, world-class support, and a robust ecosystem of third-party applications and service providers.</p><p>We are a values-driven,&#xa0;globally focused tech employer with strong financial backing. By solving the biggest problems, we focus our efforts on what matters most, driving real impact for our organization and customers. For the past three years, we’ve been recognized as a strategic leader in recruitment technology by Fosway Industry Analysts. In 2023 and 2024, we received prestigious awards from Comparably for being a top company for Women, Perks, and Benefits, Work-Life Balance, Happiness, Compensation, Diversity, Culture, and Company Outlook.</p><p>At our core, we commit and dig deep, embracing challenges with grit, curiosity, and a drive for excellence. We foster a collaborative and inclusive work environment, where trust and determination bring us together - because together, we will win. With competitive salaries, generous equity, and strong internal mobility, we ensure that high performers have meaningful growth opportunities. Our remote-friendly culture is welcoming, respectful, and built to empower every team member to thrive.</p>"
+        },
+        "jobDescription": {
+          "title": "Job Description",
+          "text": "<p><strong>Contract Type: 12-Month Fixed-Term Contract</strong></p><p>We're looking for a technical engineer to support our customers' needs in an area of data migrations, integrations, custom reports, and automating&#xa0;manual processes for our teams.&#xa0;Our team stays ahead of challenging tasks of automating&#xa0;our current processes and helping our implementation team to automate theirs.&#xa0;</p><p>If you are looking for the place where you can have a real&#xa0;impact on the shape of business solutions, you are curious and like learning new, modern approaches and constantly optimizing&#xa0;processes, you have just found&#xa0;the right place, apply now!&#xa0;</p><p>The main goal of our Team&#xa0;is to make our customers happy and successful. We process data for them and provide data directly from public / internal APIs or databases to them or other teams.</p><p><strong>What you will do:</strong></p><ul><li>Perform data imports from various sources using Talend ETL tool, Python scripts and Public / Private APIs</li><li>Perform data extracts and data dumps</li><li>Build ability to create demo environments</li><li>Build data import applications</li><li>Build integrations between different, external web applications</li><li>Improve and optimize data services processes</li><li>Work closely with the Professional Services team based in San Francisco to address customers’ requests</li><li>Become an expert in your area of interest and evangelize your colleagues</li></ul><p>&#xa0;</p><ul></ul>"
+        },
+        "qualifications": {
+          "title": "Qualifications",
+          "text": "<p><strong>Qualifications</strong></p><p>At least 2 years of experience with ETL tools (Talend preferred)</p><ul><li>At least 1 years of experience in professional programming (Python: pandas, requests, fastAPI, flask)</li><li>Experience with databases (SQL, NoSQL)</li><li>Experience with Git/Github, http(s) protocol, web applications security</li><li>Experience in building integrations between different web applications</li><li>Knowledge of different aspects of building RESTful web services</li><li>Team player</li><li>Fast learner and a passion for technology</li></ul>"
+        },
+        "additionalInformation": {
+          "title": "Additional Information",
+          "text": "<p>SmartRecruiters is proud to be an Equal Employment Opportunity and Affirmative Action employer. We do not discriminate based upon race, religion, color, national origin, gender (including pregnancy, childbirth, or related medical conditions), sexual orientation, gender identity, gender expression, age, status as a protected veteran, status as an individual with a disability, or other applicable legally protected characteristics. your information will be kept confidential according to EEO guidelines.</p>"
+        }
+      }
+    },
+    "active": true,
+    "visibility": "PUBLIC",
+    "industry": {
+      "id": "computer_software",
+      "label": "Computer Software"
+    },
+    "function": {
+      "id": "information_technology",
+      "label": "Information Technology"
+    },
+    "department": {
+      "id": 5408931,
+      "label": "Technical Services"
+    },
+    "experienceLevel": {
+      "id": "associate",
+      "label": "Associate"
+    },
+    "typeOfEmployment": {
+      "id": "contract",
+      "label": "Contract"
+    },
+    "language": {
+      "code": "en",
+      "label": "English",
+      "labelNative": "English (US)"
+    }
+  }
+}

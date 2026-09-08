@@ -91,6 +91,9 @@ greenhouse:
   - sourcegraph91          # Sourcegraph
   - splice
 
+  # discovered via `jobsearch discover-ats` 2026-09-08
+  - vercel
+
 lever:
   - finn
   # verified live 2026-09-05
@@ -158,3 +161,16 @@ ashby:
   - top-hat
   - Uberall                # Berlin, DACH; slug is case-sensitive
   - wealthsimple           # Toronto
+
+# SmartRecruiters -- unlike the other three platforms, the list endpoint never
+# inlines a description (a per-posting detail call is needed; see
+# sources/ats.py). Verified live 2026-09-08.
+smartrecruiters:
+  - sixt                   # Munich, DACH
+  - deliveryhero           # Berlin, DACH
+  - boschgroup              # Stuttgart, DACH
+  - wise                    # London, fintech
+  - picnic                  # Amsterdam, grocery delivery
+  - primark                 # Dublin/UK retail
+  - equinox                 # US
+  - smartrecruiters         # the vendor's own careers page

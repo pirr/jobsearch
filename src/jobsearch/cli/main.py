@@ -25,6 +25,7 @@ from ..matching.llm import build_embedder, build_llm
 from ..matching.llm.base import LLMError
 from ..matching.pipeline import run_match
 from ..matching.retrieval import BM25Retriever, build_retriever
+from ..vacancies.discovery import PROBEABLE_ATS, discover, hits, write_discoveries
 from ..vacancies.ingest import build_sources, check_sources, ingest
 from ..vacancies.store import Store
 
@@ -119,7 +120,10 @@ def profile(
 def ingest_cmd(
     source: str = typer.Option(
         None, "--source", "-s",
-        help="arbeitnow|remoteok|jobicy|greenhouse|lever|ashby",
+        help=(
+            "arbeitnow|remoteok|jobicy|himalayas|remotive|adzuna|"
+            "greenhouse|lever|ashby|smartrecruiters"
+        ),
     ),
     company: str = typer.Option(None, "--company", "-c", help="Single ATS company slug"),
 ):
@@ -422,6 +426,53 @@ def doctor():
         console.print(f"  [red]dead[/]  {r.label:28} {r.error[:64]}")
     if dead:
         console.print(f"\n[dim]Remove dead slugs from {config.companies_path}.[/]")
+
+
+@app.command(name="discover-ats")
+def discover_ats_cmd(
+    names: list[str] = typer.Argument(..., help="Company name(s) to guess ATS slugs for"),
+    write: bool = typer.Option(
+        False, "--write", help="Append newly-discovered slugs to companies.yaml"
+    ),
+    platform: str = typer.Option(
+        None, "--platform", help=f"Limit to one of: {', '.join(sorted(PROBEABLE_ATS))}"
+    ),
+    max_variants: int = typer.Option(8, help="Slug variants to try per company name"),
+):
+    """Guess and probe ATS slugs for company names -- no auth, no LLM tokens."""
+    if platform is not None and platform not in PROBEABLE_ATS:
+        _fail(f"--platform must be one of {', '.join(sorted(PROBEABLE_ATS))}")
+    platforms = [platform] if platform else sorted(PROBEABLE_ATS)
+    config = load_config()
+
+    console.print(f"probing {len(names)} name(s) across {', '.join(platforms)}...")
+    results = asyncio.run(discover(names, platforms=platforms, max_variants=max_variants))
+    live = hits(results)
+    dead = [r for r in results if not r.hit]
+
+    if not live:
+        console.print(f"[yellow]no live boards found[/] ({len(dead)} guess(es) tried, all empty/dead)")
+        raise typer.Exit(0)
+
+    table = Table()
+    for col in ("platform", "slug", "postings"):
+        table.add_column(col)
+    for r in sorted(live, key=lambda r: -r.fetched):
+        table.add_row(r.platform, r.slug, str(r.fetched))
+    console.print(table)
+    console.print(f"[dim]{len(dead)} other guess(es) came back empty/dead[/]")
+
+    if not write:
+        console.print("[dim]run again with --write to add these to companies.yaml[/]")
+        return
+
+    written = write_discoveries(config.companies_path, live)
+    if not written:
+        console.print("[dim]nothing new -- every live hit is already in companies.yaml[/]")
+        return
+    for plat, slugs in written.items():
+        console.print(f"[green]+[/] {plat}: {', '.join(slugs)}")
+    console.print(f"[green]wrote[/] {config.companies_path}")
 
 
 @app.command()
