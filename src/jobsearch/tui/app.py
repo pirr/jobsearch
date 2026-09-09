@@ -144,6 +144,9 @@ class JobsearchApp(App):
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         self._selected_id = str(event.row_key.value) if event.row_key.value else None
+        table = self.query_one("#table", DataTable)
+        if event.cursor_row >= table.row_count - 5:
+            self.load_more()
 
     def action_mark_status(self, status: str) -> None:
         if self.view == "duplicates" or self._selected_id is None:

@@ -2,13 +2,16 @@ from conftest import make_vacancy
 
 
 def seed_active(store, profile, n=3):
-    """n vacancies, scores descending (90, 80, 70, ...), all active/rated."""
+    """n vacancies, scores descending (99, 98, 97, ...), all active/rated.
+    Scores stay well above the default JOBSEARCH_THRESHOLD (60) even for a
+    larger n, so tests using JobsearchApp() with no config override (and
+    thus load_config()'s real default threshold) don't lose rows to it."""
     h = profile.hash()
     ids = []
     for i in range(n):
         v = make_vacancy(source_id=str(i), title=f"Role {i}", company=f"Company {i}")
         store.upsert_vacancies([v])
-        store.save_rating(v.id, h, "f", score=90 - i * 10)
+        store.save_rating(v.id, h, "f", score=99 - i)
         ids.append(v.id)
     return ids
 
@@ -142,3 +145,41 @@ async def test_mark_dismissed_while_viewing_dismissed_keeps_the_row(store, profi
         await pilot.press("d")  # re-marking dismissed while already viewing dismissed
         await pilot.pause()
         assert app.query_one("#table", DataTable).row_count == 1
+
+
+async def test_scrolling_near_the_bottom_loads_the_next_page(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable
+
+    ids = seed_active(store, profile, n=8)  # more than one small page
+    app = JobsearchApp(store=store, candidate=profile)
+    app.page_size = 3
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        table = app.query_one("#table", DataTable)
+        # page_size (3) is smaller than the 5-row lookahead, so the initial
+        # auto-highlight of row 0 already triggers one prefetch -- not all
+        # 8 rows are loaded yet, but more than just the first page is.
+        loaded_after_mount = table.row_count
+        assert 3 <= loaded_after_mount < 8
+
+        for _ in range(6):  # walk the cursor down until every row is loaded
+            await pilot.press("down")
+        await pilot.pause()
+
+        assert table.row_count == 8
+        assert app._loaded_ids == set(ids)
+
+
+async def test_load_more_never_repeats_or_skips_rows_across_batches(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+
+    ids = seed_active(store, profile, n=8)
+    app = JobsearchApp(store=store, candidate=profile)
+    app.page_size = 3
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        while len(app._loaded_ids) < len(ids):
+            app.load_more()
+            await pilot.pause()
+        assert app._loaded_ids == set(ids)
