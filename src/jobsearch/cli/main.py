@@ -567,6 +567,14 @@ def runs(limit: int = 20):
     console.print(table)
 
 
+@app.command()
+def tui():
+    """Launch the interactive terminal UI."""
+    from ..tui.app import JobsearchApp
+
+    JobsearchApp().run()
+
+
 def eval_cmd(
     directory: Path = typer.Option(Path("data/golden"), "--dir"),
     k: int = typer.Option(10),
