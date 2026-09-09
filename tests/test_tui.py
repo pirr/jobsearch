@@ -88,3 +88,57 @@ async def test_list_shown_normally_when_profile_has_ratings(store, profile):
     async with app.run_test() as pilot:
         await pilot.pause()
         assert not isinstance(app.screen, NoProfileScreen)
+
+
+async def test_mark_seen_updates_status_in_row_cache_and_keeps_row_in_active_view(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable
+
+    ids = seed_active(store, profile)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("s")
+        await pilot.pause()
+        table = app.query_one("#table", DataTable)
+        assert table.row_count == 3  # "seen" still belongs in the active view
+        assert app._row_cache[ids[0]]["status"] == "seen"
+        assert store.get_vacancy(ids[0]) is not None
+
+
+async def test_mark_dismissed_removes_row_from_active_view(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable
+
+    ids = seed_active(store, profile)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("d")
+        await pilot.pause()
+        table = app.query_one("#table", DataTable)
+        assert table.row_count == 2
+        assert ids[0] not in app._loaded_ids
+        assert store.get_vacancy(ids[0]) is not None  # hidden from this view, not deleted
+
+
+async def test_mark_dismissed_while_viewing_dismissed_keeps_the_row(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable
+
+    ids = seed_active(store, profile, n=1)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app.view = "dismissed"
+        app.load_first_page()
+        await pilot.pause()
+        # nothing dismissed yet
+        assert app.query_one("#table", DataTable).row_count == 0
+
+        store.set_status(ids[0], "dismissed")
+        app.load_first_page()
+        await pilot.pause()
+        await pilot.press("d")  # re-marking dismissed while already viewing dismissed
+        await pilot.pause()
+        assert app.query_one("#table", DataTable).row_count == 1

@@ -7,6 +7,7 @@ data-access path, no business logic duplicated into the UI layer.
 from __future__ import annotations
 
 from textual.app import App, ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import DataTable, Footer, Header, Input, Select, Static, Switch
 
@@ -32,6 +33,13 @@ class JobsearchApp(App):
     """
     TITLE = "jobsearch"
 
+    BINDINGS = [
+        Binding("s", "mark_status('seen')", "Seen"),
+        Binding("d", "mark_status('dismissed')", "Dismissed"),
+        Binding("a", "mark_status('applied')", "Applied"),
+        Binding("q", "quit", "Quit"),
+    ]
+
     def __init__(self, *, config=None, store=None, candidate=None, llm=None) -> None:
         super().__init__()
         self._config = config or load_config()
@@ -50,6 +58,7 @@ class JobsearchApp(App):
         self._loaded_ids: set[str] = set()
         self._row_cache: dict[str, object] = {}
         self._columns = []
+        self._selected_id: str | None = None
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -132,3 +141,29 @@ class JobsearchApp(App):
             self._row_cache[r["id"]] = r
         if rows:
             self.cursor = (rows[-1]["_sort_key"], rows[-1]["id"])
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        self._selected_id = str(event.row_key.value) if event.row_key.value else None
+
+    def action_mark_status(self, status: str) -> None:
+        if self.view == "duplicates" or self._selected_id is None:
+            return
+        self.mark_status_for_id(self._selected_id, status)
+
+    def mark_status_for_id(self, vacancy_id: str, status: str) -> None:
+        self.store.set_status(vacancy_id, status)
+        if vacancy_id in self._row_cache:
+            self._row_cache[vacancy_id] = dict(self._row_cache[vacancy_id]) | {"status": status}
+
+        still_in_view = (
+            (self.view == "active" and status not in ("dismissed", "closed"))
+            or (self.view not in ("active", "duplicates") and self.view == status)
+        )
+        table = self.query_one("#table", DataTable)
+        if still_in_view:
+            if vacancy_id in self._loaded_ids:
+                table.update_cell(vacancy_id, self._columns[2], status)
+        else:
+            if vacancy_id in self._loaded_ids:
+                table.remove_row(vacancy_id)
+                self._loaded_ids.discard(vacancy_id)
