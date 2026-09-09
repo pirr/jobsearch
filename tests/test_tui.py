@@ -51,3 +51,40 @@ async def test_engine_respects_view_and_sort_state_directly(store, profile):
         table = app.query_one("#table", DataTable)
         assert app._loaded_ids == {b.id, a.id}
         assert table.row_count == 2
+
+
+async def test_no_profile_screen_shown_when_profile_path_missing(tmp_path, store):
+    from jobsearch.config import Config
+    from jobsearch.tui.app import JobsearchApp
+    from jobsearch.tui.screens import NoProfileScreen
+
+    config = Config(profile_path=tmp_path / "missing-profile.json", db_path=tmp_path / "db")
+    app = JobsearchApp(config=config, store=store)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        assert isinstance(app.screen, NoProfileScreen)
+
+
+async def test_no_profile_screen_shown_when_profile_has_zero_ratings(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from jobsearch.tui.screens import NoProfileScreen
+
+    # profile exists (passed directly) but nothing has been rated for it yet
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        assert isinstance(app.screen, NoProfileScreen)
+
+
+async def test_list_shown_normally_when_profile_has_ratings(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from jobsearch.tui.screens import NoProfileScreen
+
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    store.save_rating(v.id, profile.hash(), "f", score=80)
+
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        assert not isinstance(app.screen, NoProfileScreen)

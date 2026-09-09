@@ -13,6 +13,7 @@ from textual.widgets import DataTable, Footer, Header, Input, Select, Static, Sw
 from ..candidate.profile import CandidateProfile
 from ..config import load_config
 from ..vacancies.store import Store
+from .screens import NoProfileScreen
 
 _VIEWS = ["active", "dismissed", "closed", "duplicates"]
 _SORT_OPTIONS = [
@@ -61,7 +62,22 @@ class JobsearchApp(App):
         yield Footer()
 
     async def on_mount(self) -> None:
-        self.candidate = self._candidate_override or CandidateProfile.load(self._config.profile_path)
+        self.candidate = self._candidate_override
+        if self.candidate is None:
+            if not self._config.profile_path.exists():
+                await self.push_screen(NoProfileScreen(
+                    f"no profile at {self._config.profile_path} -- "
+                    "run `jobsearch profile <cv.pdf>` first"))
+                return
+            try:
+                self.candidate = CandidateProfile.load(self._config.profile_path)
+            except Exception as exc:
+                await self.push_screen(NoProfileScreen(f"profile.json is unreadable: {exc}"))
+                return
+        if not self.store.rated_ids(self.candidate.hash()):
+            await self.push_screen(NoProfileScreen(
+                "no rated vacancies for this profile -- run `jobsearch match` first"))
+            return
         self.load_first_page()
 
     def _setup_columns_for_view(self) -> None:
