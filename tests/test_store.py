@@ -376,3 +376,29 @@ def test_ranked_page_rejects_unknown_sort_by(store, profile):
 def test_ranked_page_rejects_unknown_sort_dir(store, profile):
     with pytest.raises(ValueError, match="sort_dir"):
         store.ranked_page(profile.hash(), 0, sort_dir="sideways")
+
+
+def test_ranked_page_search_matches_title_company_or_location(store, profile):
+    h = profile.hash()
+    a = make_vacancy(source_id="1", title="Backend Engineer", company="Acme", location_raw="Berlin")
+    b = make_vacancy(source_id="2", title="Frontend Engineer", company="Globex", location_raw="Remote")
+    store.upsert_vacancies([a, b])
+    store.save_rating(a.id, h, "f", score=80)
+    store.save_rating(b.id, h, "f", score=80)
+
+    assert [r["id"] for r in store.ranked_page(h, 0, search="backend")] == [a.id]
+    assert [r["id"] for r in store.ranked_page(h, 0, search="globex")] == [b.id]
+    assert [r["id"] for r in store.ranked_page(h, 0, search="berlin")] == [a.id]
+    assert store.ranked_page(h, 0, search="nonexistent") == []
+
+
+def test_ranked_page_remote_only_excludes_non_remote_and_unknown(store, profile):
+    h = profile.hash()
+    remote = make_vacancy(source_id="1", title="Remote Role", is_remote=True)
+    onsite = make_vacancy(source_id="2", title="Onsite Role", is_remote=False)
+    unknown = make_vacancy(source_id="3", title="Unknown Role")
+    store.upsert_vacancies([remote, onsite, unknown])
+    for v in (remote, onsite, unknown):
+        store.save_rating(v.id, h, "f", score=80)
+
+    assert [r["id"] for r in store.ranked_page(h, 0, remote_only=True)] == [remote.id]

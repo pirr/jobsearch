@@ -342,6 +342,8 @@ class Store:
         threshold: int,
         *,
         only_status: str | None = None,
+        search: str | None = None,
+        remote_only: bool = False,
         sort_by: str = "score",
         sort_dir: str = "desc",
         after: tuple[object, str] | None = None,
@@ -389,6 +391,13 @@ class Store:
             "v.id NOT IN (SELECT vacancy_id FROM vacancy_duplicates)",
             status_clause,
         ]
+        if search:
+            where.append(
+                "(v.title LIKE :search OR v.company LIKE :search OR v.location_raw LIKE :search)"
+            )
+            params["search"] = f"%{search}%"
+        if remote_only:
+            where.append("v.is_remote = 1")
         if after is not None:
             after_value, after_id = after
             op = "<" if sort_dir == "desc" else ">"
