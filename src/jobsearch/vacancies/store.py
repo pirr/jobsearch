@@ -60,6 +60,19 @@ CREATE TABLE IF NOT EXISTS vacancy_status (
     FOREIGN KEY (vacancy_id) REFERENCES vacancies(id) ON DELETE CASCADE
 );
 
+-- Manual escape hatch for what dedupe.py's hash-based identity misses: a
+-- typo'd company name or a differently formatted location_raw across
+-- sources produces two ids for what is really one posting. `vacancy_id` is
+-- hidden from ranked(); `canonical_id` is the one that stays visible and is
+-- never itself hidden by this table.
+CREATE TABLE IF NOT EXISTS vacancy_duplicates (
+    vacancy_id   TEXT PRIMARY KEY,
+    canonical_id TEXT NOT NULL,
+    marked_at    TEXT NOT NULL,
+    FOREIGN KEY (vacancy_id) REFERENCES vacancies(id) ON DELETE CASCADE,
+    FOREIGN KEY (canonical_id) REFERENCES vacancies(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS ingest_runs (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     source      TEXT NOT NULL,
@@ -266,6 +279,9 @@ class Store:
         By default excludes `dismissed` and `closed` (the two statuses that
         mean "not a real option any more"). Pass `only_status` to flip that
         around and see just that one bucket instead -- e.g. `show --closed`.
+        Also always excludes anything marked a duplicate (mark_duplicate) --
+        unconditionally, even under `only_status`, since that is a fact about
+        the data rather than a per-candidate judgment call like status is.
         """
         if only_status:
             status_clause = "COALESCE(s.status,'new') = ?"
@@ -282,6 +298,7 @@ class Store:
                 JOIN vacancies v ON v.id = r.vacancy_id
                 LEFT JOIN vacancy_status s ON s.vacancy_id = v.id
                 WHERE r.profile_hash = ? AND r.failed = 0 AND r.score >= ?
+                  AND v.id NOT IN (SELECT vacancy_id FROM vacancy_duplicates)
                   AND {status_clause}
                 ORDER BY r.score DESC
                 LIMIT ?
@@ -308,6 +325,24 @@ class Store:
                    status=excluded.status, updated_at=excluded.updated_at""",
             (vacancy_id, status, _now()),
         )
+        self.conn.commit()
+
+    # ---- duplicates ------------------------------------------------------
+
+    def mark_duplicate(self, vacancy_id: str, canonical_id: str) -> None:
+        if vacancy_id == canonical_id:
+            raise ValueError("a vacancy cannot be marked as a duplicate of itself")
+        self.conn.execute(
+            """INSERT INTO vacancy_duplicates (vacancy_id, canonical_id, marked_at)
+               VALUES (?,?,?)
+               ON CONFLICT(vacancy_id) DO UPDATE SET
+                   canonical_id=excluded.canonical_id, marked_at=excluded.marked_at""",
+            (vacancy_id, canonical_id, _now()),
+        )
+        self.conn.commit()
+
+    def unmark_duplicate(self, vacancy_id: str) -> None:
+        self.conn.execute("DELETE FROM vacancy_duplicates WHERE vacancy_id = ?", (vacancy_id,))
         self.conn.commit()
 
     # ---- ingest runs ---------------------------------------------------

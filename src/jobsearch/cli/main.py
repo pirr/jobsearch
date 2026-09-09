@@ -356,6 +356,30 @@ def mark(vacancy_id: str, status: str = typer.Argument(..., help="seen|dismissed
     console.print(f"[green]{vacancy_id}[/] -> {status}")
 
 
+@app.command(name="mark-duplicate")
+def mark_duplicate_cmd(
+    vacancy_id: str,
+    canonical_id: str = typer.Argument(
+        None, help="the vacancy id to keep visible -- omit only with --undo"
+    ),
+    undo: bool = typer.Option(False, "--undo", help="unmark vacancy_id as a duplicate"),
+):
+    """Hide a vacancy as a duplicate of another (dedupe.py's hash missed it --
+    e.g. a typo'd company name or differently formatted location)."""
+    with _store() as store:
+        if undo:
+            store.unmark_duplicate(vacancy_id)
+            console.print(f"[green]{vacancy_id}[/] no longer marked a duplicate")
+            return
+        if not canonical_id:
+            _fail("canonical_id is required unless --undo")
+        try:
+            store.mark_duplicate(vacancy_id, canonical_id)
+        except ValueError as exc:
+            _fail(str(exc))
+    console.print(f"[green]{vacancy_id}[/] -> duplicate of [green]{canonical_id}[/] (hidden from show)")
+
+
 @app.command()
 def profiles():
     """List every archived profile version."""

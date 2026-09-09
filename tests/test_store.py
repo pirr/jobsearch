@@ -1,5 +1,6 @@
 import json
 
+import pytest
 from conftest import make_vacancy
 
 
@@ -24,6 +25,45 @@ def test_ranked_includes_evidence_with_penalty_notes(store):
 
     row = store.ranked("h", 0, 10)[0]
     assert json.loads(row["evidence"])["penalty_notes"] == evidence["penalty_notes"]
+
+
+def test_mark_duplicate_hides_it_from_ranked_but_not_the_canonical_one(store):
+    # dedupe.py's hash-based identity misses this in practice -- e.g. a
+    # typo'd company name ("doctorlib" vs "Doctolib") or a differently
+    # formatted location_raw ("Berlin" vs "Berlin, Berlin, Germany") produces
+    # two different ids for what is really one posting. This is the manual
+    # escape hatch for that.
+    dup = make_vacancy(source_id="1", company="doctorlib", location_raw="Berlin")
+    canonical = make_vacancy(source_id="2", company="Doctolib",
+                              location_raw="Berlin, Berlin, Germany")
+    store.upsert_vacancies([dup, canonical])
+    store.save_rating(dup.id, "h", "f", score=90)
+    store.save_rating(canonical.id, "h", "f", score=85)
+
+    store.mark_duplicate(dup.id, canonical.id)
+
+    ids = {r["id"] for r in store.ranked("h", 0, 10)}
+    assert dup.id not in ids
+    assert canonical.id in ids
+
+
+def test_unmark_duplicate_restores_visibility(store):
+    dup = make_vacancy(source_id="1")
+    canonical = make_vacancy(source_id="2", title="Different Title")
+    store.upsert_vacancies([dup, canonical])
+    store.save_rating(dup.id, "h", "f", score=90)
+    store.mark_duplicate(dup.id, canonical.id)
+
+    store.unmark_duplicate(dup.id)
+
+    assert dup.id in {r["id"] for r in store.ranked("h", 0, 10)}
+
+
+def test_mark_duplicate_rejects_marking_a_vacancy_as_its_own_duplicate(store):
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    with pytest.raises(ValueError, match="itself"):
+        store.mark_duplicate(v.id, v.id)
 
 
 def test_ratings_are_keyed_by_profile_hash(store):
