@@ -9,7 +9,7 @@ from __future__ import annotations
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal
-from textual.widgets import DataTable, Footer, Header, Input, Select, Static, Switch
+from textual.widgets import Button, DataTable, Footer, Header, Input, Select, Static, Switch
 
 from ..candidate.profile import CandidateProfile
 from ..config import load_config
@@ -66,6 +66,7 @@ class JobsearchApp(App):
         with Horizontal(id="filterbar"):
             yield Input(placeholder="search title/company/location", id="search")
             yield Select(_SORT_OPTIONS, value="score", id="sort", allow_blank=False)
+            yield Button("↓ desc", id="sort-dir")
             yield Switch(id="remote-only")
             yield Static("remote only", id="remote-only-label")
         yield DataTable(id="table", cursor_type="row")
@@ -107,6 +108,14 @@ class JobsearchApp(App):
         self.load_more()
 
     def load_more(self) -> None:
+        # Widgets in the filter bar (Select, Switch, ...) can post their
+        # initial Changed message as soon as they mount, which bubbles up
+        # to the App regardless of which screen is active -- including
+        # while NoProfileScreen is showing and on_mount's guard already
+        # returned early without ever setting self.candidate.
+        if self.candidate is None and self.view != "duplicates":
+            return
+
         table = self.query_one("#table", DataTable)
 
         if self.view == "duplicates":
@@ -151,6 +160,19 @@ class JobsearchApp(App):
 
     def action_focus_search(self) -> None:
         self.query_one("#search", Input).focus()
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id != "sort":
+            return
+        self.sort_by = event.value
+        self.load_first_page()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id != "sort-dir":
+            return
+        self.sort_dir = "asc" if self.sort_dir == "desc" else "desc"
+        event.button.label = "↑ asc" if self.sort_dir == "asc" else "↓ desc"
+        self.load_first_page()
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         self._selected_id = str(event.row_key.value) if event.row_key.value else None

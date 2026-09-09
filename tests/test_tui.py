@@ -223,3 +223,38 @@ async def test_slash_focuses_the_search_input(store, profile):
         await pilot.press("slash")
         await pilot.pause()
         assert app.query_one("#search", Input).has_focus
+
+
+async def test_changing_sort_select_resorts_and_resets_pagination(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable, Select
+
+    h = profile.hash()
+    a = make_vacancy(source_id="1", company="Zeta")
+    b = make_vacancy(source_id="2", company="Alpha")
+    store.upsert_vacancies([a, b])
+    store.save_rating(a.id, h, "f", score=70)
+    store.save_rating(b.id, h, "f", score=90)
+
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app.query_one("#sort", Select).value = "company"
+        await pilot.pause()
+        assert app.sort_by == "company"
+        table = app.query_one("#table", DataTable)
+        assert table.row_count == 2
+
+
+async def test_sort_direction_button_flips_and_reloads(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import Button
+
+    seed_active(store, profile, n=2)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        assert app.sort_dir == "desc"
+        await pilot.click("#sort-dir")
+        await pilot.pause()
+        assert app.sort_dir == "asc"
