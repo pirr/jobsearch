@@ -533,3 +533,62 @@ async def test_u_unmarks_duplicate_in_duplicates_view(store, profile):
         ).fetchone()
         assert row is None
         assert dup.id in [r["id"] for r in store.ranked_page(profile.hash(), 0)]
+
+
+async def test_edit_description_updates_store_and_rerates_in_background(store, profile, monkeypatch):
+    from jobsearch.tui.app import JobsearchApp
+    from jobsearch.matching.llm.fake import FakeLLM
+
+    v = make_vacancy(description="short snippet")
+    store.upsert_vacancies([v])
+    store.save_rating(v.id, profile.hash(), "fake", score=80)
+
+    monkeypatch.setattr(
+        JobsearchApp, "_prompt_editor", lambda self, current: "full real description"
+    )
+    llm = FakeLLM(responses=[{
+        "score": 77, "hard_blockers": [], "matched_skills": [],
+        "missing_skills": [], "summary_fit": "", "summary_gap": "",
+    }])
+
+    app = JobsearchApp(store=store, candidate=profile, llm=llm)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app._selected_id = v.id
+        await pilot.press("e")
+        await pilot.pause(0.2)  # background thread worker needs a beat
+
+        assert store.get_vacancy(v.id)["description"] == "full real description"
+        assert app._row_cache[v.id]["score"] == 77
+
+
+async def test_edit_description_shows_llm_hint_notification_on_failure(store, profile, monkeypatch):
+    from jobsearch.tui.app import JobsearchApp
+    from jobsearch.matching.llm.base import LLMError
+
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    store.save_rating(v.id, profile.hash(), "fake", score=80)
+
+    monkeypatch.setattr(JobsearchApp, "_prompt_editor", lambda self, current: "new text")
+
+    class FailingLLM:
+        name = "fake"
+
+        def complete_json(self, *a, **kw):
+            raise LLMError("boom")
+
+        def embed(self, *a, **kw):
+            return []
+
+    notifications = []
+    app = JobsearchApp(store=store, candidate=profile, llm=FailingLLM())
+    app.notify = lambda message, **kw: notifications.append((message, kw.get("severity")))
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app._selected_id = v.id
+        await pilot.press("e")
+        await pilot.pause(0.2)
+
+        assert any(sev == "error" for _, sev in notifications)
+        assert store.get_vacancy(v.id)["description"] == "new text"  # description saved even if re-rate fails

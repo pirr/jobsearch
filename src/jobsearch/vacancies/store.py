@@ -121,7 +121,13 @@ def _iso(value: datetime | None) -> str | None:
 class Store:
     def __init__(self, path: Path | str):
         self.path = Path(path)
-        self.conn = sqlite3.connect(self.path)
+        # check_same_thread=False: the TUI re-rates a vacancy in a background
+        # thread worker (so a slow LLM call doesn't freeze the UI) using this
+        # same Store/connection. Safe here because access is effectively
+        # serialized -- only one worker runs at a time and the rest of the
+        # app's own SQLite calls happen on the main thread between UI events,
+        # never concurrently with it.
+        self.conn = sqlite3.connect(self.path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.execute("PRAGMA journal_mode = WAL")

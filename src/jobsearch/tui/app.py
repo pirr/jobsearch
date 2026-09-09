@@ -6,6 +6,7 @@ data-access path, no business logic duplicated into the UI layer.
 
 from __future__ import annotations
 
+from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal
@@ -13,6 +14,10 @@ from textual.widgets import Button, DataTable, Footer, Header, Input, Select, St
 
 from ..candidate.profile import CandidateProfile
 from ..config import load_config
+from ..editing import open_in_editor
+from ..matching.llm import build_llm, llm_hint
+from ..matching.llm.base import LLMError
+from ..matching.pipeline import rate_and_save
 from ..vacancies.store import Store
 from .duplicate_modal import DuplicatePickerModal
 from .screens import DetailScreen, NoProfileScreen
@@ -41,6 +46,7 @@ class JobsearchApp(App):
         Binding("a", "mark_status('applied')", "Applied"),
         Binding("m", "mark_duplicate", "Duplicate"),
         Binding("u", "unmark_duplicate", "Unmark", show=False),
+        Binding("e", "edit_description", "Edit desc"),
         Binding("c", "cycle_view", "Cycle view"),
         Binding("r", "refresh", "Refresh"),
         Binding("q", "quit", "Quit"),
@@ -235,6 +241,53 @@ class JobsearchApp(App):
                 self._loaded_ids.discard(vacancy_id)
 
         self.push_screen(DuplicatePickerModal(self.store, vacancy_id, title, company), handle_result)
+
+    def action_edit_description(self) -> None:
+        if self.view == "duplicates" or self._selected_id is None:
+            return
+        self.edit_description_for_id(self._selected_id)
+
+    def edit_description_for_id(self, vacancy_id: str) -> None:
+        current = self.store.get_vacancy(vacancy_id)["description"] or ""
+        new_text = self._prompt_editor(current)
+        if not new_text or new_text == current:
+            return
+        self.store.update_description(vacancy_id, new_text)
+        if vacancy_id in self._row_cache:
+            self._row_cache[vacancy_id] = dict(self._row_cache[vacancy_id]) | {
+                "description": new_text
+            }
+        self._rerate(vacancy_id)
+
+    def _prompt_editor(self, current: str) -> str:
+        """Isolated from edit_description_for_id so tests can monkeypatch
+        just this method -- suspending the app to run a real subprocess
+        editor is not something to exercise under `App.run_test()`'s
+        headless driver, which is not guaranteed to support suspending."""
+        with self.suspend():
+            return open_in_editor(current)
+
+    @work(thread=True)
+    def _rerate(self, vacancy_id: str) -> None:
+        llm = self._llm_override or build_llm(self._config)
+        row = self.store.get_vacancy(vacancy_id)
+        try:
+            outcome = rate_and_save(self.store, self.candidate, llm, row, self.candidate.hash())
+        except LLMError as exc:
+            hint = llm_hint(self._config)
+            message = f"{exc}\n{hint}" if hint else str(exc)
+            self.call_from_thread(self.notify, message, severity="error")
+            return
+        if not outcome.ok:
+            self.call_from_thread(self.notify, f"re-rate failed: {outcome.error}", severity="error")
+            return
+        self.call_from_thread(self._apply_rerate, vacancy_id, outcome.final_score)
+
+    def _apply_rerate(self, vacancy_id: str, score: int) -> None:
+        if vacancy_id in self._row_cache:
+            self._row_cache[vacancy_id] = dict(self._row_cache[vacancy_id]) | {"score": score}
+        if vacancy_id in self._loaded_ids and self.view != "duplicates":
+            self.query_one("#table", DataTable).update_cell(vacancy_id, self._columns[0], str(score))
 
     def action_unmark_duplicate(self) -> None:
         if self.view != "duplicates" or self._selected_id is None:
