@@ -8,7 +8,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import typer
@@ -384,24 +387,51 @@ def mark_duplicate_cmd(
         console.print(f"[yellow]warning:[/] {note}")
 
 
+def _read_description_input(current: str) -> str:
+    """Piped input (scriptable: `cat file.txt | update-description <id>`) is
+    read as-is. An interactive terminal instead opens $EDITOR pre-filled with
+    the current description -- pasting a large block straight into a
+    terminal's raw stdin is exactly the "неудобно" this replaces; a real
+    editor buffer handles paste, multi-line text and edits far better than a
+    bare `Ctrl+D`-terminated stdin read does."""
+    if not sys.stdin.isatty():
+        return sys.stdin.read().strip()
+    editor = os.environ.get("EDITOR", "vi")
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+        f.write(current)
+        path = Path(f.name)
+    try:
+        subprocess.run([editor, str(path)], check=True)
+        return path.read_text(encoding="utf-8").strip()
+    finally:
+        path.unlink(missing_ok=True)
+
+
 @app.command(name="update-description")
 def update_description_cmd(vacancy_id: str):
-    """Replace a vacancy's stored description with text piped/pasted on
-    stdin, then re-rate just this one vacancy against the active profile.
+    """Replace a vacancy's stored description, then re-rate just this one
+    vacancy against the active profile.
 
     For sources whose API only returns a snippet (Adzuna's is capped around
     ~500 characters) -- click through to the real posting yourself, paste
     the full text back in. One vacancy at a time, never automated: nothing
-    here fetches the page for you.
+    here fetches the page for you. Run interactively, this opens $EDITOR
+    pre-filled with the current description; piped (`... | update-description
+    <id>`), it reads stdin directly, unchanged from before.
     """
-    text = sys.stdin.read().strip()
-    if not text:
-        _fail("no text received on stdin -- pipe or paste the full description in")
-
     config = load_config()
     if not config.profile_path.exists():
         _fail(f"no profile at {config.profile_path} -- run `jobsearch profile <cv.pdf>` first")
     candidate = CandidateProfile.load(config.profile_path)
+
+    with _store() as store:
+        existing = store.get_vacancy(vacancy_id)
+        if existing is None:
+            _fail(f"no vacancy with id {vacancy_id!r}")
+
+    text = _read_description_input(existing["description"] or "")
+    if not text:
+        _fail("no text received -- pipe input, or save non-empty text in the editor")
 
     try:
         llm = build_llm(config)
@@ -409,8 +439,6 @@ def update_description_cmd(vacancy_id: str):
         _fail_llm(exc, config)
 
     with _store() as store:
-        if store.get_vacancy(vacancy_id) is None:
-            _fail(f"no vacancy with id {vacancy_id!r}")
         store.update_description(vacancy_id, text)
         row = store.get_vacancy(vacancy_id)
 
