@@ -374,10 +374,12 @@ def mark_duplicate_cmd(
         if not canonical_id:
             _fail("canonical_id is required unless --undo")
         try:
-            store.mark_duplicate(vacancy_id, canonical_id)
+            note = store.mark_duplicate(vacancy_id, canonical_id)
         except ValueError as exc:
             _fail(str(exc))
     console.print(f"[green]{vacancy_id}[/] -> duplicate of [green]{canonical_id}[/] (hidden from show)")
+    if note:
+        console.print(f"[yellow]warning:[/] {note}")
 
 
 @app.command()

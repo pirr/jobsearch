@@ -329,9 +329,37 @@ class Store:
 
     # ---- duplicates ------------------------------------------------------
 
-    def mark_duplicate(self, vacancy_id: str, canonical_id: str) -> None:
+    def mark_duplicate(self, vacancy_id: str, canonical_id: str) -> str | None:
+        """Mark vacancy_id as a duplicate of canonical_id, hiding it from
+        ranked(). If vacancy_id carries a status (seen/dismissed/applied)
+        and canonical_id doesn't have one of its own yet, that status
+        transfers -- otherwise a fact like "I applied to this" would
+        silently vanish from view along with the now-hidden duplicate.
+
+        Returns a warning string if vacancy_id's status conflicts with a
+        status canonical_id already has of its own (never overwritten
+        automatically -- the caller decides), otherwise None.
+        """
         if vacancy_id == canonical_id:
             raise ValueError("a vacancy cannot be marked as a duplicate of itself")
+
+        note = None
+        dup_status = self.conn.execute(
+            "SELECT status FROM vacancy_status WHERE vacancy_id = ?", (vacancy_id,)
+        ).fetchone()
+        if dup_status:
+            canonical_status = self.conn.execute(
+                "SELECT status FROM vacancy_status WHERE vacancy_id = ?", (canonical_id,)
+            ).fetchone()
+            if canonical_status is None:
+                self.set_status(canonical_id, dup_status["status"])
+            elif canonical_status["status"] != dup_status["status"]:
+                note = (
+                    f"{vacancy_id} was marked {dup_status['status']!r} but "
+                    f"{canonical_id} already has status {canonical_status['status']!r} "
+                    "-- not overwritten, review manually"
+                )
+
         self.conn.execute(
             """INSERT INTO vacancy_duplicates (vacancy_id, canonical_id, marked_at)
                VALUES (?,?,?)
@@ -340,6 +368,7 @@ class Store:
             (vacancy_id, canonical_id, _now()),
         )
         self.conn.commit()
+        return note
 
     def unmark_duplicate(self, vacancy_id: str) -> None:
         self.conn.execute("DELETE FROM vacancy_duplicates WHERE vacancy_id = ?", (vacancy_id,))

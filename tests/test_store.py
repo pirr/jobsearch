@@ -47,6 +47,36 @@ def test_mark_duplicate_hides_it_from_ranked_but_not_the_canonical_one(store):
     assert canonical.id in ids
 
 
+def test_mark_duplicate_transfers_status_to_a_canonical_with_none_yet(store):
+    # A real bug found in production: a vacancy already marked "applied" was
+    # then marked a duplicate. The canonical vacancy took over its visibility
+    # but not its status -- the fact that the candidate had applied silently
+    # disappeared from `show` along with the hidden duplicate.
+    dup = make_vacancy(source_id="1")
+    canonical = make_vacancy(source_id="2", title="Different Title")
+    store.upsert_vacancies([dup, canonical])
+    store.set_status(dup.id, "applied")
+
+    store.mark_duplicate(dup.id, canonical.id)
+
+    store.save_rating(canonical.id, "h", "f", score=80)
+    assert store.ranked("h", 0, 10)[0]["status"] == "applied"
+
+
+def test_mark_duplicate_does_not_silently_overwrite_a_conflicting_status(store):
+    dup = make_vacancy(source_id="1")
+    canonical = make_vacancy(source_id="2", title="Different Title")
+    store.upsert_vacancies([dup, canonical])
+    store.set_status(dup.id, "applied")
+    store.set_status(canonical.id, "dismissed")
+
+    note = store.mark_duplicate(dup.id, canonical.id)
+
+    assert note is not None and "applied" in note and "dismissed" in note
+    store.save_rating(canonical.id, "h", "f", score=80)
+    assert store.ranked("h", 0, 10, only_status="dismissed")[0]["status"] == "dismissed"
+
+
 def test_unmark_duplicate_restores_visibility(store):
     dup = make_vacancy(source_id="1")
     canonical = make_vacancy(source_id="2", title="Different Title")
