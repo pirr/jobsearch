@@ -277,7 +277,7 @@ class Store:
             self.conn.execute(
                 f"""
                 SELECT v.*, r.score, r.verdict, r.matched_skills, r.missing_skills,
-                       r.hard_blockers, r.model, COALESCE(s.status,'new') AS status
+                       r.hard_blockers, r.model, r.evidence, COALESCE(s.status,'new') AS status
                 FROM ratings r
                 JOIN vacancies v ON v.id = r.vacancy_id
                 LEFT JOIN vacancy_status s ON s.vacancy_id = v.id

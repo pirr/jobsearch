@@ -12,6 +12,7 @@ from pathlib import Path
 
 import typer
 from rich.console import Console
+from rich.markup import escape as rich_escape
 from rich.panel import Panel
 from rich.table import Table
 
@@ -315,6 +316,7 @@ def _panel(row) -> None:
     matched = json.loads(row["matched_skills"] or "[]")
     missing = json.loads(row["missing_skills"] or "[]")
     blockers = json.loads(row["hard_blockers"] or "[]")
+    penalty_notes = json.loads(row["evidence"] or "{}").get("penalty_notes") or []
     status = row["status"]
     status_text = f"[cyan]status: {status}[/]" if status == "applied" else f"[dim]status: {status}[/]"
     body = [
@@ -331,6 +333,14 @@ def _panel(row) -> None:
         body.append(f"[yellow]missing:[/] {', '.join(missing[:8])}")
     if blockers:
         body.append(f"[red]blockers:[/] {'; '.join(blockers[:4])}")
+    if penalty_notes:
+        body.append("[dim]soft penalties:[/]")
+        for note in penalty_notes:
+            # Notes always contain literal "[...]" ("[inferred, not stated in
+            # CV]"), plus free text (location_raw etc.) that could too --
+            # Rich's own markup tags use the same syntax, so unescaped this
+            # silently swallows exactly the bracketed part meant to be read.
+            body.append(f"  [dim]{rich_escape(note)}[/]")
     console.print(Panel("\n".join(body), title=f"[bold]{row['score']}[/] · {row['title']}",
                         subtitle=f"[dim]{row['id']}[/]", title_align="left"))
 

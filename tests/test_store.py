@@ -10,6 +10,22 @@ def test_upsert_is_idempotent(store):
     assert store.count_vacancies() == 1
 
 
+def test_ranked_includes_evidence_with_penalty_notes(store):
+    # evidence (including soft_penalty's penalty_notes) is written but was
+    # never selected back by ranked() -- `jobsearch show --full` silently had
+    # nothing to render even though the data existed in the DB.
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    evidence = {
+        "summary_fit": "strong Python match",
+        "penalty_notes": ["-10 location Manchester != Remote EU [inferred, not stated in CV]"],
+    }
+    store.save_rating(v.id, "h", "fake", score=70, verdict="good", evidence=evidence)
+
+    row = store.ranked("h", 0, 10)[0]
+    assert json.loads(row["evidence"])["penalty_notes"] == evidence["penalty_notes"]
+
+
 def test_ratings_are_keyed_by_profile_hash(store):
     v = make_vacancy()
     store.upsert_vacancies([v])
