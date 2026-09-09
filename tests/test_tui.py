@@ -353,3 +353,67 @@ async def test_duplicates_view_shows_marked_pairs_with_their_own_columns(store, 
         table = app.query_one("#table", DataTable)
         assert table.row_count == 1
         assert dup.id in app._loaded_ids
+
+
+async def test_enter_opens_detail_screen_with_matched_and_missing_skills(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from jobsearch.tui.screens import DetailScreen
+
+    h = profile.hash()
+    v = make_vacancy(title="Backend Role")
+    store.upsert_vacancies([v])
+    store.save_rating(
+        v.id, h, "f", score=85, verdict="strong",
+        matched_skills=[{"skill": "Python", "evidence_cv": "5 years Python",
+                          "evidence_vacancy": "Python required"}],
+        missing_skills=["Kubernetes"],
+    )
+
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+        assert isinstance(app.screen, DetailScreen)
+        from textual.widgets import Static
+        body = app.screen.query_one("#detail-body", Static).render()
+        assert "Python" in str(body)
+        assert "Kubernetes" in str(body)
+
+
+async def test_escape_closes_detail_screen_without_reloading_the_list(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from jobsearch.tui.screens import DetailScreen
+    from textual.widgets import DataTable
+
+    seed_active(store, profile, n=2)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        loaded_before = set(app._loaded_ids)
+        await pilot.press("enter")
+        await pilot.pause()
+        assert isinstance(app.screen, DetailScreen)
+        await pilot.press("escape")
+        await pilot.pause()
+        assert not isinstance(app.screen, DetailScreen)
+        assert app._loaded_ids == loaded_before
+        assert app.query_one("#table", DataTable).row_count == 2
+
+
+async def test_status_action_works_from_detail_screen(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+
+    ids = seed_active(store, profile, n=1)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+        await pilot.press("d")
+        await pilot.pause()
+        assert store.get_vacancy(ids[0])["id"] == ids[0]
+        row = store.conn.execute(
+            "SELECT status FROM vacancy_status WHERE vacancy_id=?", (ids[0],)
+        ).fetchone()
+        assert row["status"] == "dismissed"

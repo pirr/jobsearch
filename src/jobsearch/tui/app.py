@@ -14,7 +14,7 @@ from textual.widgets import Button, DataTable, Footer, Header, Input, Select, St
 from ..candidate.profile import CandidateProfile
 from ..config import load_config
 from ..vacancies.store import Store
-from .screens import NoProfileScreen
+from .screens import DetailScreen, NoProfileScreen
 
 _VIEWS = ["active", "dismissed", "closed", "duplicates"]
 _SORT_OPTIONS = [
@@ -195,6 +195,13 @@ class JobsearchApp(App):
         table = self.query_one("#table", DataTable)
         if event.cursor_row >= table.row_count - 5:
             self.load_more()
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        if self.view == "duplicates" or not event.row_key.value:
+            return
+        row = self._row_cache.get(str(event.row_key.value))
+        if row is not None:
+            self.push_screen(DetailScreen(row))
 
     def action_mark_status(self, status: str) -> None:
         if self.view == "duplicates" or self._selected_id is None:
