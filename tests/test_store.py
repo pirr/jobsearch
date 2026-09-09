@@ -267,3 +267,53 @@ def test_get_profile_returns_the_record(store):
     row = store.get_profile("id-1")
     assert row["profile_hash"] == "hash-a"
     assert json.loads(row["source_files"]) == ["cv.pdf", "cover.pdf"]
+
+
+# ---- ranked_page (keyset pagination) --------------------------------------
+
+def test_ranked_page_keyset_is_stable_when_a_row_leaves_the_view_mid_browse(store, profile):
+    # The classic OFFSET-pagination bug: if v2 is marked dismissed between
+    # fetching page 1 and page 2, an OFFSET-based query would shift v3 into
+    # page 1's old slot and duplicate it into page 2. Keyset pagination
+    # anchors each page on the last row actually seen, not a row count, so
+    # this can't happen.
+    h = profile.hash()
+    v1 = make_vacancy(source_id="1", title="A")
+    v2 = make_vacancy(source_id="2", title="B")
+    v3 = make_vacancy(source_id="3", title="C")
+    store.upsert_vacancies([v1, v2, v3])
+    store.save_rating(v1.id, h, "f", score=90)
+    store.save_rating(v2.id, h, "f", score=80)
+    store.save_rating(v3.id, h, "f", score=70)
+
+    page1 = store.ranked_page(h, 0, page_size=2)
+    assert [r["id"] for r in page1] == [v1.id, v2.id]
+
+    store.set_status(v2.id, "dismissed")
+
+    cursor = (page1[-1]["_sort_key"], page1[-1]["id"])
+    page2 = store.ranked_page(h, 0, after=cursor, page_size=2)
+    assert [r["id"] for r in page2] == [v3.id]
+
+
+def test_ranked_page_defaults_to_active_view_score_desc(store, profile):
+    h = profile.hash()
+    lo, hi = make_vacancy(title="Low"), make_vacancy(title="High", source_id="2")
+    store.upsert_vacancies([lo, hi])
+    store.save_rating(lo.id, h, "f", score=45)
+    store.save_rating(hi.id, h, "f", score=88)
+    store.set_status(lo.id, "dismissed")
+
+    rows = store.ranked_page(h, 0)
+    assert [r["id"] for r in rows] == [hi.id]
+
+
+def test_ranked_page_only_status_shows_just_that_bucket(store, profile):
+    h = profile.hash()
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    store.save_rating(v.id, h, "f", score=90)
+    store.set_status(v.id, "dismissed")
+
+    assert store.ranked_page(h, 0) == []
+    assert [r["id"] for r in store.ranked_page(h, 0, only_status="dismissed")] == [v.id]

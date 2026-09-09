@@ -321,6 +321,66 @@ class Store:
             )
         )
 
+    def ranked_page(
+        self,
+        profile_hash: str,
+        threshold: int,
+        *,
+        only_status: str | None = None,
+        after: tuple[int, str] | None = None,
+        page_size: int = 50,
+    ) -> list[sqlite3.Row]:
+        """Keyset-paginated vacancy list for the TUI, score DESC.
+
+        Ordered by (score, id) with a seek predicate on `after` -- never
+        OFFSET, which silently duplicates or skips rows across pages when a
+        status change mid-browse shrinks the filtered result set out from
+        under a numeric offset. `after` is the (row["_sort_key"], row["id"])
+        of the last row already loaded by the caller; pass None for the
+        first page. Named (`:name`) parameters, not positional `?`, because
+        the WHERE clause is assembled dynamically from several optional
+        pieces -- positional params would be fragile to reorder here.
+        """
+        params: dict[str, object] = {
+            "profile_hash": profile_hash,
+            "threshold": threshold,
+            "page_size": page_size,
+        }
+        if only_status:
+            status_clause = "COALESCE(s.status,'new') = :status"
+            params["status"] = only_status
+        else:
+            status_clause = "COALESCE(s.status,'new') NOT IN ('dismissed', 'closed')"
+
+        where = [
+            "r.profile_hash = :profile_hash",
+            "r.failed = 0",
+            "r.score >= :threshold",
+            "v.id NOT IN (SELECT vacancy_id FROM vacancy_duplicates)",
+            status_clause,
+        ]
+        if after is not None:
+            after_value, after_id = after
+            where.append(
+                "(r.score < :after_value OR (r.score = :after_value AND v.id > :after_id))"
+            )
+            params["after_value"] = after_value
+            params["after_id"] = after_id
+
+        sql = f"""
+            SELECT v.*, r.score, r.verdict, r.matched_skills, r.missing_skills,
+                   r.hard_blockers, r.model, r.evidence,
+                   COALESCE(s.status,'new') AS status,
+                   r.score AS _sort_key
+            FROM ratings r
+            JOIN vacancies v ON v.id = r.vacancy_id
+            LEFT JOIN vacancy_status s ON s.vacancy_id = v.id
+            WHERE {" AND ".join(where)}
+            ORDER BY r.score DESC, v.id ASC
+            LIMIT :page_size
+        """
+        return list(self.conn.execute(sql, params))
+
     def failed_ratings(self, profile_hash: str) -> int:
         row = self.conn.execute(
             "SELECT COUNT(*) c FROM ratings WHERE profile_hash = ? AND failed = 1",
