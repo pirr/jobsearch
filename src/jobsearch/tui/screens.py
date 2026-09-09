@@ -40,6 +40,7 @@ class DetailScreen(Screen):
         ("s", "mark_status('seen')", "Seen"),
         ("d", "mark_status('dismissed')", "Dismissed"),
         ("a", "mark_status('applied')", "Applied"),
+        ("m", "mark_duplicate", "Duplicate"),
     ]
 
     def __init__(self, row) -> None:
@@ -86,3 +87,7 @@ class DetailScreen(Screen):
     def action_mark_status(self, status: str) -> None:
         self.app.mark_status_for_id(self.row["id"], status)
         self.app.pop_screen()
+
+    def action_mark_duplicate(self) -> None:
+        self.app.pop_screen()
+        self.app.open_duplicate_picker(self.row["id"], self.row["title"], self.row["company"])

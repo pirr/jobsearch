@@ -417,3 +417,88 @@ async def test_status_action_works_from_detail_screen(store, profile):
             "SELECT status FROM vacancy_status WHERE vacancy_id=?", (ids[0],)
         ).fetchone()
         assert row["status"] == "dismissed"
+
+
+async def test_m_opens_duplicate_picker_modal(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from jobsearch.tui.duplicate_modal import DuplicatePickerModal
+
+    seed_active(store, profile, n=2)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("m")
+        await pilot.pause()
+        assert isinstance(app.screen, DuplicatePickerModal)
+
+
+async def test_duplicate_picker_search_finds_any_vacancy_not_just_loaded_ones(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from jobsearch.tui.duplicate_modal import DuplicatePickerModal
+    from textual.widgets import Input, ListView
+
+    seed_active(store, profile, n=1)
+    # a vacancy that's unrated (never loaded into the main list) but should
+    # still be findable as a canonical target
+    unrated = make_vacancy(source_id="unrated", title="Unrated Canonical Role")
+    store.upsert_vacancies([unrated])
+
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("m")
+        await pilot.pause()
+        modal = app.screen
+        assert isinstance(modal, DuplicatePickerModal)
+        search = modal.query_one("#dup-search", Input)
+        search.focus()
+        for ch in "unrated":
+            await pilot.press(ch)
+        await pilot.pause()
+        results = modal.query_one("#dup-results", ListView)
+        assert len(results.children) == 1
+
+
+async def test_confirming_duplicate_pick_hides_the_row_and_writes_the_mark(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable, Input, ListView, Button
+
+    h = profile.hash()
+    dup = make_vacancy(source_id="1", title="Dup Role")
+    canonical = make_vacancy(source_id="2", title="Canonical Role")
+    store.upsert_vacancies([dup, canonical])
+    store.save_rating(dup.id, h, "f", score=80)
+    store.save_rating(canonical.id, h, "f", score=75)
+
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        table = app.query_one("#table", DataTable)
+        table.move_cursor(row=0)  # dup sorts first: score 80 > canonical's 75
+        await pilot.pause()
+        assert app._selected_id == dup.id
+
+        await pilot.press("m")
+        await pilot.pause()
+        modal = app.screen
+        search = modal.query_one("#dup-search", Input)
+        search.focus()
+        for ch in "canonical":
+            await pilot.press(ch)
+        await pilot.pause()
+        results = modal.query_one("#dup-results", ListView)
+        results.focus()
+        results.index = 0
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+        confirm_button = modal.query_one("#dup-confirm-btn", Button)
+        assert not confirm_button.disabled
+        await pilot.click("#dup-confirm-btn")
+        await pilot.pause()
+
+        assert dup.id not in app._loaded_ids
+        row = store.conn.execute(
+            "SELECT canonical_id FROM vacancy_duplicates WHERE vacancy_id=?", (dup.id,)
+        ).fetchone()
+        assert row["canonical_id"] == canonical.id

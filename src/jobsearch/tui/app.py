@@ -14,6 +14,7 @@ from textual.widgets import Button, DataTable, Footer, Header, Input, Select, St
 from ..candidate.profile import CandidateProfile
 from ..config import load_config
 from ..vacancies.store import Store
+from .duplicate_modal import DuplicatePickerModal
 from .screens import DetailScreen, NoProfileScreen
 
 _VIEWS = ["active", "dismissed", "closed", "duplicates"]
@@ -38,6 +39,7 @@ class JobsearchApp(App):
         Binding("s", "mark_status('seen')", "Seen"),
         Binding("d", "mark_status('dismissed')", "Dismissed"),
         Binding("a", "mark_status('applied')", "Applied"),
+        Binding("m", "mark_duplicate", "Duplicate"),
         Binding("c", "cycle_view", "Cycle view"),
         Binding("r", "refresh", "Refresh"),
         Binding("q", "quit", "Quit"),
@@ -207,6 +209,31 @@ class JobsearchApp(App):
         if self.view == "duplicates" or self._selected_id is None:
             return
         self.mark_status_for_id(self._selected_id, status)
+
+    def action_mark_duplicate(self) -> None:
+        if self.view == "duplicates" or self._selected_id is None:
+            return
+        row = self._row_cache.get(self._selected_id)
+        if row is None:
+            return
+        self.open_duplicate_picker(self._selected_id, row["title"], row["company"])
+
+    def open_duplicate_picker(self, vacancy_id: str, title: str, company: str) -> None:
+        def handle_result(canonical_id: str | None) -> None:
+            if canonical_id is None:
+                return
+            try:
+                note = self.store.mark_duplicate(vacancy_id, canonical_id)
+            except ValueError as exc:
+                self.notify(str(exc), severity="error")
+                return
+            if note:
+                self.notify(note, severity="warning")
+            if vacancy_id in self._loaded_ids:
+                self.query_one("#table", DataTable).remove_row(vacancy_id)
+                self._loaded_ids.discard(vacancy_id)
+
+        self.push_screen(DuplicatePickerModal(self.store, vacancy_id, title, company), handle_result)
 
     def mark_status_for_id(self, vacancy_id: str, status: str) -> None:
         self.store.set_status(vacancy_id, status)
