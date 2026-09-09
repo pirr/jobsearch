@@ -8,10 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import typer
@@ -25,8 +22,9 @@ from ..candidate.extractor import extract_profile
 from ..candidate.factory import ReaderFactory
 from ..candidate.profile import CandidateProfile
 from ..config import load_config
+from ..editing import open_in_editor
 from ..matching.evaluation import GoldenSet, evaluate
-from ..matching.llm import build_embedder, build_llm
+from ..matching.llm import build_embedder, build_llm, llm_hint
 from ..matching.llm.base import LLMError
 from ..matching.pipeline import rate_and_save, run_match
 from ..matching.rating import verdict_for
@@ -48,29 +46,8 @@ def _fail(message: str) -> None:
     raise typer.Exit(1)
 
 
-def _llm_hint(config) -> str:
-    """Backend-appropriate troubleshooting line for an LLMError.
-
-    The three backends fail in different ways for different reasons, so a
-    hint naming the wrong one (e.g. always suggesting `ollama serve` while
-    JOBSEARCH_LLM=llamacpp) sends someone chasing the wrong server.
-    """
-    backend = config.llm_backend.lower()
-    if backend == "ollama":
-        return f"Is Ollama running? Try: ollama serve && ollama pull {config.ollama_model}"
-    if backend == "llamacpp":
-        return (
-            f"Is llama-server running and reachable at {config.llamacpp_host}? "
-            "If it's on another machine, check the port and that it's bound to "
-            "0.0.0.0 rather than only 127.0.0.1."
-        )
-    if backend == "anthropic":
-        return "Check ANTHROPIC_API_KEY is set and valid."
-    return ""
-
-
 def _fail_llm(exc: Exception, config) -> None:
-    hint = _llm_hint(config)
+    hint = llm_hint(config)
     _fail(f"{exc}\n\n{hint}" if hint else str(exc))
 
 
@@ -389,22 +366,15 @@ def mark_duplicate_cmd(
 
 def _read_description_input(current: str) -> str:
     """Piped input (scriptable: `cat file.txt | update-description <id>`) is
-    read as-is. An interactive terminal instead opens $EDITOR pre-filled with
-    the current description -- pasting a large block straight into a
-    terminal's raw stdin is exactly the "неудобно" this replaces; a real
-    editor buffer handles paste, multi-line text and edits far better than a
-    bare `Ctrl+D`-terminated stdin read does."""
+    read as-is. An interactive terminal instead opens $EDITOR pre-filled
+    with the current description via the shared `editing.open_in_editor`
+    helper (also used by the TUI's `e` action) -- pasting a large block
+    straight into a terminal's raw stdin is exactly the "неудобно" this
+    replaces; a real editor buffer handles paste, multi-line text and edits
+    far better than a bare `Ctrl+D`-terminated stdin read does."""
     if not sys.stdin.isatty():
         return sys.stdin.read().strip()
-    editor = os.environ.get("EDITOR", "vi")
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
-        f.write(current)
-        path = Path(f.name)
-    try:
-        subprocess.run([editor, str(path)], check=True)
-        return path.read_text(encoding="utf-8").strip()
-    finally:
-        path.unlink(missing_ok=True)
+    return open_in_editor(current)
 
 
 @app.command(name="update-description")
@@ -622,7 +592,7 @@ def eval_cmd(
             try:
                 r = evaluate(golden, engine, k=k)
             except LLMError as exc:
-                console.print(f"[red]{name} failed:[/] {exc}\n{_llm_hint(config)}")
+                console.print(f"[red]{name} failed:[/] {exc}\n{llm_hint(config)}")
                 break
             table.add_row(r.golden, r.retriever, f"{r.precision:.3f}",
                           f"{r.recall:.3f}", f"{r.ndcg:.3f}",

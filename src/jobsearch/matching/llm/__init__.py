@@ -10,7 +10,7 @@ from .ollama import OllamaClient
 
 __all__ = [
     "LLMClient", "LLMError", "FakeLLM", "OllamaClient", "LlamaCppClient",
-    "build_llm", "build_embedder", "parse_json_response",
+    "build_llm", "build_embedder", "parse_json_response", "llm_hint",
 ]
 
 
@@ -39,6 +39,28 @@ def build_llm(config: Config) -> LLMClient:
         # pipeline without a real backend. Never the default.
         return FakeLLM()
     raise LLMError(f"unknown JOBSEARCH_LLM backend {config.llm_backend!r}")
+
+
+def llm_hint(config: Config) -> str:
+    """Backend-appropriate troubleshooting line for an LLMError.
+
+    The three backends fail in different ways for different reasons, so a
+    hint naming the wrong one (e.g. always suggesting `ollama serve` while
+    JOBSEARCH_LLM=llamacpp) sends someone chasing the wrong server. Shared
+    by the CLI and the TUI so both show the same guidance.
+    """
+    backend = config.llm_backend.lower()
+    if backend == "ollama":
+        return f"Is Ollama running? Try: ollama serve && ollama pull {config.ollama_model}"
+    if backend == "llamacpp":
+        return (
+            f"Is llama-server running and reachable at {config.llamacpp_host}? "
+            "If it's on another machine, check the port and that it's bound to "
+            "0.0.0.0 rather than only 127.0.0.1."
+        )
+    if backend == "anthropic":
+        return "Check ANTHROPIC_API_KEY is set and valid."
+    return ""
 
 
 def build_embedder(config: Config) -> LLMClient:
