@@ -502,3 +502,34 @@ async def test_confirming_duplicate_pick_hides_the_row_and_writes_the_mark(store
             "SELECT canonical_id FROM vacancy_duplicates WHERE vacancy_id=?", (dup.id,)
         ).fetchone()
         assert row["canonical_id"] == canonical.id
+
+
+async def test_u_unmarks_duplicate_in_duplicates_view(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable
+
+    dup = make_vacancy(source_id="1", title="Dup Role")
+    canonical = make_vacancy(source_id="2", title="Canonical Role")
+    store.upsert_vacancies([dup, canonical])
+    store.save_rating(dup.id, profile.hash(), "f", score=80)
+    store.mark_duplicate(dup.id, canonical.id)
+
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app.view = "duplicates"
+        app.load_first_page()
+        await pilot.pause()
+        table = app.query_one("#table", DataTable)
+        assert table.row_count == 1
+        app._selected_id = dup.id
+
+        await pilot.press("u")
+        await pilot.pause()
+
+        assert table.row_count == 0
+        row = store.conn.execute(
+            "SELECT * FROM vacancy_duplicates WHERE vacancy_id=?", (dup.id,)
+        ).fetchone()
+        assert row is None
+        assert dup.id in [r["id"] for r in store.ranked_page(profile.hash(), 0)]

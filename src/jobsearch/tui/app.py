@@ -40,6 +40,7 @@ class JobsearchApp(App):
         Binding("d", "mark_status('dismissed')", "Dismissed"),
         Binding("a", "mark_status('applied')", "Applied"),
         Binding("m", "mark_duplicate", "Duplicate"),
+        Binding("u", "unmark_duplicate", "Unmark", show=False),
         Binding("c", "cycle_view", "Cycle view"),
         Binding("r", "refresh", "Refresh"),
         Binding("q", "quit", "Quit"),
@@ -234,6 +235,14 @@ class JobsearchApp(App):
                 self._loaded_ids.discard(vacancy_id)
 
         self.push_screen(DuplicatePickerModal(self.store, vacancy_id, title, company), handle_result)
+
+    def action_unmark_duplicate(self) -> None:
+        if self.view != "duplicates" or self._selected_id is None:
+            return
+        self.store.unmark_duplicate(self._selected_id)
+        if self._selected_id in self._loaded_ids:
+            self.query_one("#table", DataTable).remove_row(self._selected_id)
+            self._loaded_ids.discard(self._selected_id)
 
     def mark_status_for_id(self, vacancy_id: str, status: str) -> None:
         self.store.set_status(vacancy_id, status)
