@@ -177,6 +177,20 @@ class Store:
             row = self.conn.execute("SELECT COUNT(*) c FROM vacancies").fetchone()
         return row["c"]
 
+    def get_vacancy(self, vacancy_id: str) -> sqlite3.Row | None:
+        return self.conn.execute(
+            "SELECT * FROM vacancies WHERE id = ?", (vacancy_id,)
+        ).fetchone()
+
+    def update_description(self, vacancy_id: str, description: str) -> None:
+        """Replace a vacancy's stored description -- for pasting in the full
+        text after manually clicking through to it (e.g. Adzuna's API only
+        ever returns a ~500-char snippet), one vacancy at a time."""
+        self.conn.execute(
+            "UPDATE vacancies SET description = ? WHERE id = ?", (description, vacancy_id)
+        )
+        self.conn.commit()
+
     def all_vacancies(self, exclude_dismissed: bool = True) -> list[sqlite3.Row]:
         sql = "SELECT v.* FROM vacancies v"
         if exclude_dismissed:

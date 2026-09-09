@@ -21,6 +21,48 @@ def row_text(row) -> str:
     return "\n".join(p for p in parts if p)
 
 
+def rate_and_save(store: Store, profile: CandidateProfile, llm, row, profile_hash: str):
+    """Rate one vacancy and persist the result -- the per-row step
+    run_match's shortlist loop uses, factored out so a single vacancy can
+    also be re-rated on demand (e.g. `jobsearch update-description`, after
+    pasting in a fuller description than the source API provided) without
+    re-running the whole shortlist and re-paying for every other vacancy on
+    it."""
+    outcome = rate_one(llm, profile, row)
+    if not outcome.ok:
+        store.save_rating(
+            row["id"], profile_hash, getattr(llm, "name", "unknown"),
+            failed=True, error=outcome.error,
+        )
+        return outcome
+
+    penalty, notes = soft_penalty(profile, row)
+    outcome.penalty = penalty
+    outcome.penalty_notes = notes
+    score = max(0, min(100, outcome.rating.score - penalty))
+    # A hard blocker the model found is not a filter -- it is a heavy score
+    # penalty, so the candidate still sees it and can disagree.
+    if outcome.rating.hard_blockers:
+        score = min(score, 39)
+    outcome.final_score = score
+    store.save_rating(
+        row["id"], profile_hash, getattr(llm, "name", "unknown"),
+        score=score,
+        verdict=verdict_for(score),
+        matched_skills=[m.model_dump() for m in outcome.rating.matched_skills],
+        missing_skills=outcome.rating.missing_skills,
+        hard_blockers=outcome.rating.hard_blockers,
+        evidence={
+            "summary_fit": outcome.rating.summary_fit,
+            "summary_gap": outcome.rating.summary_gap,
+            "soft_penalty": penalty,
+            "penalty_notes": notes,
+            "dropped_claims": outcome.dropped_claims,
+        },
+    )
+    return outcome
+
+
 @dataclass
 class MatchReport:
     total: int = 0
@@ -128,39 +170,13 @@ def run_match(
             report.already_rated += 1
             continue
 
-        outcome = rate_one(llm, profile, row)
+        outcome = rate_and_save(store, profile, llm, row, profile_hash)
         report.llm_calls += 1
-
         if not outcome.ok:
             report.failed += 1
-            store.save_rating(
-                row["id"], profile_hash, getattr(llm, "name", "unknown"),
-                failed=True, error=outcome.error,
-            )
         else:
-            penalty, notes = soft_penalty(profile, row)
-            score = max(0, min(100, outcome.rating.score - penalty))
-            # A hard blocker the model found is not a filter -- it is a heavy
-            # score penalty, so the candidate still sees it and can disagree.
-            if outcome.rating.hard_blockers:
-                score = min(score, 39)
             report.rated += 1
             report.dropped_claims += len(outcome.dropped_claims)
-            store.save_rating(
-                row["id"], profile_hash, getattr(llm, "name", "unknown"),
-                score=score,
-                verdict=verdict_for(score),
-                matched_skills=[m.model_dump() for m in outcome.rating.matched_skills],
-                missing_skills=outcome.rating.missing_skills,
-                hard_blockers=outcome.rating.hard_blockers,
-                evidence={
-                    "summary_fit": outcome.rating.summary_fit,
-                    "summary_gap": outcome.rating.summary_gap,
-                    "soft_penalty": penalty,
-                    "penalty_notes": notes,
-                    "dropped_claims": outcome.dropped_claims,
-                },
-            )
         if progress:
             progress(row, outcome)
     return report

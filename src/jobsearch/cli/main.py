@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
 from pathlib import Path
 
 import typer
@@ -24,7 +25,8 @@ from ..config import load_config
 from ..matching.evaluation import GoldenSet, evaluate
 from ..matching.llm import build_embedder, build_llm
 from ..matching.llm.base import LLMError
-from ..matching.pipeline import run_match
+from ..matching.pipeline import rate_and_save, run_match
+from ..matching.rating import verdict_for
 from ..matching.retrieval import BM25Retriever, build_retriever
 from ..vacancies.discovery import PROBEABLE_ATS, discover, hits, write_discoveries
 from ..vacancies.ingest import build_sources, check_sources, ingest
@@ -380,6 +382,47 @@ def mark_duplicate_cmd(
     console.print(f"[green]{vacancy_id}[/] -> duplicate of [green]{canonical_id}[/] (hidden from show)")
     if note:
         console.print(f"[yellow]warning:[/] {note}")
+
+
+@app.command(name="update-description")
+def update_description_cmd(vacancy_id: str):
+    """Replace a vacancy's stored description with text piped/pasted on
+    stdin, then re-rate just this one vacancy against the active profile.
+
+    For sources whose API only returns a snippet (Adzuna's is capped around
+    ~500 characters) -- click through to the real posting yourself, paste
+    the full text back in. One vacancy at a time, never automated: nothing
+    here fetches the page for you.
+    """
+    text = sys.stdin.read().strip()
+    if not text:
+        _fail("no text received on stdin -- pipe or paste the full description in")
+
+    config = load_config()
+    if not config.profile_path.exists():
+        _fail(f"no profile at {config.profile_path} -- run `jobsearch profile <cv.pdf>` first")
+    candidate = CandidateProfile.load(config.profile_path)
+
+    try:
+        llm = build_llm(config)
+    except LLMError as exc:
+        _fail_llm(exc, config)
+
+    with _store() as store:
+        if store.get_vacancy(vacancy_id) is None:
+            _fail(f"no vacancy with id {vacancy_id!r}")
+        store.update_description(vacancy_id, text)
+        row = store.get_vacancy(vacancy_id)
+
+        console.print(f"[dim]description updated ({len(text):,} chars) -- re-rating...[/]")
+        try:
+            outcome = rate_and_save(store, candidate, llm, row, candidate.hash())
+        except LLMError as exc:
+            _fail_llm(exc, config)
+
+    if not outcome.ok:
+        _fail(f"rating failed: {outcome.error}")
+    console.print(f"[green]{vacancy_id}[/] -> {outcome.final_score} ({verdict_for(outcome.final_score)})")
 
 
 @app.command()

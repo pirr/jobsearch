@@ -9,7 +9,7 @@ from jobsearch.matching.evaluation import ndcg_at_k, precision_at_k, recall_at_k
 from jobsearch.matching.filters import apply_hard_filters, soft_penalty
 from jobsearch.matching.llm.base import parse_json_response, LLMError
 from jobsearch.matching.llm.fake import FakeLLM
-from jobsearch.matching.pipeline import run_match
+from jobsearch.matching.pipeline import rate_and_save, run_match
 from jobsearch.matching.rating import Rating, rate_one, verify_grounding
 from jobsearch.matching.retrieval import BM25Retriever
 
@@ -449,6 +449,45 @@ def test_force_reconsiders_a_restricted_vacancy_crowded_out_by_reachable_ones(st
     assert forced.llm_calls == 2
     row = next(r for r in store.ranked(profile.hash(), 0, 10) if r["id"] == restricted.id)
     assert row["score"] != 92  # actually re-rated, not left at the seeded value
+
+
+def test_rate_and_save_applies_penalty_and_stores_the_rating(store):
+    # Extracted from run_match's inline loop body so a single vacancy can be
+    # re-rated on demand (e.g. after `jobsearch update-description` pastes in
+    # a fuller description) without re-running the whole shortlist.
+    p = CandidateProfile(
+        skills=["Python"],
+        constraints=[Constraint(kind="remote", value="remote only", stated=False)],
+    )
+    v = make_vacancy(is_remote=False)
+    store.upsert_vacancies([v])
+    llm = FakeLLM([{"score": 90, "matched_skills": [], "missing_skills": [],
+                    "summary_fit": "", "summary_gap": ""}])
+
+    outcome = rate_and_save(store, p, llm, store.get_vacancy(v.id), p.hash())
+
+    assert outcome.ok
+    # Populated on the returned outcome too (not just persisted to the DB) --
+    # a caller like a future single-vacancy CLI command needs the actual
+    # final score without a second DB round-trip.
+    assert outcome.penalty == 12
+    assert outcome.penalty_notes
+    assert outcome.final_score == 78  # 90 - 12 (not-remote soft penalty)
+    row = store.ranked(p.hash(), 0, 10)[0]
+    assert row["score"] == 78
+
+
+def test_rate_and_save_records_a_failed_rating(store):
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    # rate_one retries once by default -- both attempts must fail validation,
+    # or the second call falls through to FakeLLM's well-formed default reply.
+    llm = FakeLLM([{"score": "not a number"}, {"score": "still bad"}])
+
+    outcome = rate_and_save(store, CandidateProfile(), llm, store.get_vacancy(v.id), "h")
+
+    assert not outcome.ok
+    assert store.failed_ratings("h") == 1
 
 
 def test_rate_one_prompt_includes_candidate_constraints_and_geo_signal(profile):

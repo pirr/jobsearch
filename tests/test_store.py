@@ -11,6 +11,27 @@ def test_upsert_is_idempotent(store):
     assert store.count_vacancies() == 1
 
 
+def test_get_vacancy_returns_the_row(store):
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    row = store.get_vacancy(v.id)
+    assert row["id"] == v.id and row["title"] == v.title
+
+
+def test_get_vacancy_returns_none_when_missing(store):
+    assert store.get_vacancy("does-not-exist") is None
+
+
+def test_update_description_replaces_the_stored_text(store):
+    # For manually pasting the full posting text after clicking through to
+    # it by hand (e.g. an Adzuna listing, whose API only ever returns a
+    # ~500-char snippet) -- one vacancy at a time, never automated.
+    v = make_vacancy(description="short snippet")
+    store.upsert_vacancies([v])
+    store.update_description(v.id, "full real description with much more detail")
+    assert store.get_vacancy(v.id)["description"] == "full real description with much more detail"
+
+
 def test_ranked_includes_evidence_with_penalty_notes(store):
     # evidence (including soft_penalty's penalty_notes) is written but was
     # never selected back by ranked() -- `jobsearch show --full` silently had

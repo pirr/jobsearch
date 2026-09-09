@@ -97,6 +97,11 @@ class RatingOutcome:
     dropped_claims: list[str] = field(default_factory=list)
     penalty: int = 0
     penalty_notes: list[str] = field(default_factory=list)
+    # Populated by pipeline.rate_and_save(), not by rate_one() itself: the
+    # clamped, hard-blocker-capped score actually persisted, so a caller that
+    # needs it (a single-vacancy re-rate command, say) has one place to read
+    # it instead of re-deriving the same clamp math a second time.
+    final_score: int | None = None
 
     @property
     def ok(self) -> bool:
