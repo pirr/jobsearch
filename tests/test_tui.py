@@ -183,3 +183,43 @@ async def test_load_more_never_repeats_or_skips_rows_across_batches(store, profi
             app.load_more()
             await pilot.pause()
         assert app._loaded_ids == set(ids)
+
+
+async def test_typing_in_search_filters_and_resets_pagination(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable, Input
+
+    h = profile.hash()
+    a = make_vacancy(source_id="1", title="Backend Engineer")
+    b = make_vacancy(source_id="2", title="Frontend Engineer")
+    store.upsert_vacancies([a, b])
+    store.save_rating(a.id, h, "f", score=80)
+    store.save_rating(b.id, h, "f", score=80)
+
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        assert app.query_one("#table", DataTable).row_count == 2
+
+        search = app.query_one("#search", Input)
+        search.focus()
+        for ch in "backend":
+            await pilot.press(ch)
+        await pilot.pause()
+
+        table = app.query_one("#table", DataTable)
+        assert table.row_count == 1
+        assert app._loaded_ids == {a.id}
+
+
+async def test_slash_focuses_the_search_input(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import Input
+
+    seed_active(store, profile, n=1)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("slash")
+        await pilot.pause()
+        assert app.query_one("#search", Input).has_focus

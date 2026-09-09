@@ -34,6 +34,7 @@ class JobsearchApp(App):
     TITLE = "jobsearch"
 
     BINDINGS = [
+        Binding("slash", "focus_search", "Search"),
         Binding("s", "mark_status('seen')", "Seen"),
         Binding("d", "mark_status('dismissed')", "Dismissed"),
         Binding("a", "mark_status('applied')", "Applied"),
@@ -141,6 +142,15 @@ class JobsearchApp(App):
             self._row_cache[r["id"]] = r
         if rows:
             self.cursor = (rows[-1]["_sort_key"], rows[-1]["id"])
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id != "search":
+            return
+        self.search_text = event.value.strip()
+        self.load_first_page()
+
+    def action_focus_search(self) -> None:
+        self.query_one("#search", Input).focus()
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         self._selected_id = str(event.row_key.value) if event.row_key.value else None
