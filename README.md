@@ -66,11 +66,36 @@ jobsearch match                     # filter, shortlist, rate
 jobsearch show                      # ranked results
 jobsearch show --full               # with evidence for each match
 jobsearch mark <vacancy-id> dismissed
+jobsearch tui                       # interactive terminal UI: scrollable list,
+                                     #   no display limit, filter/sort/status/
+                                     #   duplicate/description actions in place
 jobsearch eval --retrievers bm25,embeddings   # retrieval quality vs. data/golden/
 ```
 
 Sending your CV to `JOBSEARCH_LLM=anthropic` sends personal data to a third
 party; `ollama` and `llamacpp` keep it local.
+
+### Interactive TUI
+
+`jobsearch tui` replaces `show`'s hard display limit with a keyset-paginated,
+scrollable list -- keep scrolling (or reaching the bottom loads more
+automatically) instead of re-running `show --limit N`. Inside it:
+
+- `/` search by title/company/location; the sort dropdown and remote-only
+  switch in the filter bar re-query as you change them
+- `Enter` opens a vacancy's full detail (matched/missing skills, evidence,
+  blockers) -- the URL there is a clickable terminal hyperlink
+- `s` / `d` / `a` mark seen / dismissed / applied in place
+- `c` cycles the view: active -> dismissed -> closed -> duplicates
+- `m` opens the duplicate picker (search any vacancy, confirm, hide); `u` in
+  the duplicates view undoes a mark
+- `e` opens $EDITOR on the description (same flow as `update-description`),
+  then re-rates in the background without blocking the UI
+- `r` refreshes, `q`/`Esc` goes back/quits
+
+Under Docker: `docker compose run --rm jobsearch tui` -- no compose file
+changes needed, a pseudo-TTY is allocated the same way any interactive
+`docker compose run` already gets one.
 
 ## Sources
 
@@ -105,7 +130,7 @@ the account, and Belarus isn't an Adzuna market at all.
 ## Tests
 
 ```bash
-pytest              # 130 tests, all offline (recorded fixtures, no network, no LLM)
+pytest              # 191 tests, all offline (recorded fixtures, no network, no LLM)
 ```
 
 `jobsearch eval` is not part of the suite — it measures retrieval quality
