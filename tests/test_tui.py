@@ -282,3 +282,74 @@ async def test_remote_only_switch_filters_and_resets_pagination(store, profile):
         table = app.query_one("#table", DataTable)
         assert table.row_count == 1
         assert app._loaded_ids == {remote.id}
+
+
+async def test_cycle_view_moves_through_active_dismissed_closed_duplicates(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+
+    app = JobsearchApp(store=store, candidate=profile)
+    seed_active(store, profile, n=1)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        assert app.view == "active"
+        await pilot.press("c")
+        await pilot.pause()
+        assert app.view == "dismissed"
+        await pilot.press("c")
+        await pilot.pause()
+        assert app.view == "closed"
+        await pilot.press("c")
+        await pilot.pause()
+        assert app.view == "duplicates"
+        await pilot.press("c")
+        await pilot.pause()
+        assert app.view == "active"
+
+
+async def test_refresh_reloads_the_current_view_with_a_fresh_cursor(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable
+
+    ids = seed_active(store, profile, n=8)
+    app = JobsearchApp(store=store, candidate=profile)
+    app.page_size = 2
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        table = app.query_one("#table", DataTable)
+
+        for _ in range(6):  # walk the cursor down to load most/all of it
+            await pilot.press("down")
+        await pilot.pause()
+        scrolled_count = table.row_count
+        assert scrolled_count > 2
+
+        await pilot.press("r")
+        await pilot.pause()
+
+        # Fewer rows than the scrolled-to state, and exactly a fresh prefix
+        # of the sorted list -- proof this re-queried from a fresh cursor
+        # rather than just continuing pagination from where it left off.
+        after_refresh = table.row_count
+        assert after_refresh < scrolled_count
+        assert app._loaded_ids == set(ids[:after_refresh])
+
+
+async def test_duplicates_view_shows_marked_pairs_with_their_own_columns(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable
+
+    dup = make_vacancy(source_id="1", title="Dup Title")
+    canonical = make_vacancy(source_id="2", title="Canonical Title")
+    store.upsert_vacancies([dup, canonical])
+    store.save_rating(canonical.id, profile.hash(), "f", score=80)
+    store.mark_duplicate(dup.id, canonical.id)
+
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app.view = "duplicates"
+        app.load_first_page()
+        await pilot.pause()
+        table = app.query_one("#table", DataTable)
+        assert table.row_count == 1
+        assert dup.id in app._loaded_ids

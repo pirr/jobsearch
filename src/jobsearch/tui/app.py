@@ -38,6 +38,8 @@ class JobsearchApp(App):
         Binding("s", "mark_status('seen')", "Seen"),
         Binding("d", "mark_status('dismissed')", "Dismissed"),
         Binding("a", "mark_status('applied')", "Applied"),
+        Binding("c", "cycle_view", "Cycle view"),
+        Binding("r", "refresh", "Refresh"),
         Binding("q", "quit", "Quit"),
     ]
 
@@ -178,6 +180,14 @@ class JobsearchApp(App):
         if event.switch.id != "remote-only":
             return
         self.remote_only = event.value
+        self.load_first_page()
+
+    def action_cycle_view(self) -> None:
+        idx = _VIEWS.index(self.view)
+        self.view = _VIEWS[(idx + 1) % len(_VIEWS)]
+        self.load_first_page()
+
+    def action_refresh(self) -> None:
         self.load_first_page()
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
