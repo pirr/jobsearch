@@ -258,3 +258,27 @@ async def test_sort_direction_button_flips_and_reloads(store, profile):
         await pilot.click("#sort-dir")
         await pilot.pause()
         assert app.sort_dir == "asc"
+
+
+async def test_remote_only_switch_filters_and_resets_pagination(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable, Switch
+
+    h = profile.hash()
+    remote = make_vacancy(source_id="1", title="Remote Role", is_remote=True)
+    onsite = make_vacancy(source_id="2", title="Onsite Role", is_remote=False)
+    store.upsert_vacancies([remote, onsite])
+    store.save_rating(remote.id, h, "f", score=80)
+    store.save_rating(onsite.id, h, "f", score=80)
+
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        assert app.query_one("#table", DataTable).row_count == 2
+
+        app.query_one("#remote-only", Switch).value = True
+        await pilot.pause()
+
+        table = app.query_one("#table", DataTable)
+        assert table.row_count == 1
+        assert app._loaded_ids == {remote.id}

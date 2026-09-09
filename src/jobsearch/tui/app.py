@@ -174,6 +174,12 @@ class JobsearchApp(App):
         event.button.label = "↑ asc" if self.sort_dir == "asc" else "↓ desc"
         self.load_first_page()
 
+    def on_switch_changed(self, event: Switch.Changed) -> None:
+        if event.switch.id != "remote-only":
+            return
+        self.remote_only = event.value
+        self.load_first_page()
+
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         self._selected_id = str(event.row_key.value) if event.row_key.value else None
         table = self.query_one("#table", DataTable)
