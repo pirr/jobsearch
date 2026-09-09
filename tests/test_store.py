@@ -317,3 +317,62 @@ def test_ranked_page_only_status_shows_just_that_bucket(store, profile):
 
     assert store.ranked_page(h, 0) == []
     assert [r["id"] for r in store.ranked_page(h, 0, only_status="dismissed")] == [v.id]
+
+
+def test_ranked_page_sorts_by_requested_column(store, profile):
+    h = profile.hash()
+    a = make_vacancy(source_id="1", company="Zeta", title="A")
+    b = make_vacancy(source_id="2", company="Alpha", title="B")
+    store.upsert_vacancies([a, b])
+    store.save_rating(a.id, h, "f", score=50)
+    store.save_rating(b.id, h, "f", score=90)
+
+    by_company_asc = store.ranked_page(h, 0, sort_by="company", sort_dir="asc")
+    assert [r["id"] for r in by_company_asc] == [b.id, a.id]  # Alpha before Zeta
+
+    by_title_desc = store.ranked_page(h, 0, sort_by="title", sort_dir="desc")
+    assert [r["id"] for r in by_title_desc] == [b.id, a.id]  # "B" before "A"
+
+
+def test_ranked_page_puts_unposted_dates_last_regardless_of_direction(store, profile):
+    from datetime import datetime, timezone
+
+    h = profile.hash()
+    dated = make_vacancy(source_id="1", title="Dated",
+                          posted_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
+    undated = make_vacancy(source_id="2", title="Undated")
+    store.upsert_vacancies([dated, undated])
+    store.save_rating(dated.id, h, "f", score=50)
+    store.save_rating(undated.id, h, "f", score=50)
+
+    desc = store.ranked_page(h, 0, sort_by="posted_at", sort_dir="desc")
+    asc = store.ranked_page(h, 0, sort_by="posted_at", sort_dir="asc")
+    assert [r["id"] for r in desc][-1] == undated.id
+    assert [r["id"] for r in asc][-1] == undated.id
+
+
+def test_ranked_page_keyset_pagination_works_for_non_default_sort(store, profile):
+    h = profile.hash()
+    names = ["Charlie", "Alpha", "Bravo"]
+    ids = []
+    for i, name in enumerate(names):
+        v = make_vacancy(source_id=str(i), company=name)
+        store.upsert_vacancies([v])
+        store.save_rating(v.id, h, "f", score=50)
+        ids.append(v.id)
+
+    page1 = store.ranked_page(h, 0, sort_by="company", sort_dir="asc", page_size=2)
+    assert [r["company"] for r in page1] == ["Alpha", "Bravo"]
+    cursor = (page1[-1]["_sort_key"], page1[-1]["id"])
+    page2 = store.ranked_page(h, 0, sort_by="company", sort_dir="asc", after=cursor, page_size=2)
+    assert [r["company"] for r in page2] == ["Charlie"]
+
+
+def test_ranked_page_rejects_unknown_sort_by(store, profile):
+    with pytest.raises(ValueError, match="sort_by"):
+        store.ranked_page(profile.hash(), 0, sort_by="bogus")
+
+
+def test_ranked_page_rejects_unknown_sort_dir(store, profile):
+    with pytest.raises(ValueError, match="sort_dir"):
+        store.ranked_page(profile.hash(), 0, sort_dir="sideways")

@@ -94,6 +94,21 @@ CREATE INDEX IF NOT EXISTS idx_profiles_hash ON profiles(profile_hash);
 
 VALID_STATUSES = ("seen", "dismissed", "applied", "closed")
 
+_SORT_COLUMNS = {
+    "score": "r.score",
+    "posted_at": "v.posted_at",
+    "company": "v.company",
+    "title": "v.title",
+}
+# posted_at is the only nullable sort column here (r.score is guaranteed
+# non-null by the r.score >= :threshold filter below -- NULL >= number is
+# NULL, i.e. excluded; company/title are NOT NULL in the schema). COALESCE
+# it to a sentinel that always sorts after every real value in either
+# direction, so unposted-date rows land at the end of the list regardless
+# of sort_dir instead of SQLite's default rule (NULLs sort first in ASC),
+# which would scatter them to the front.
+_NULL_SENTINELS = {"desc": "", "asc": "9999-12-31T23:59:59+00:00"}
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -327,25 +342,40 @@ class Store:
         threshold: int,
         *,
         only_status: str | None = None,
-        after: tuple[int, str] | None = None,
+        sort_by: str = "score",
+        sort_dir: str = "desc",
+        after: tuple[object, str] | None = None,
         page_size: int = 50,
     ) -> list[sqlite3.Row]:
-        """Keyset-paginated vacancy list for the TUI, score DESC.
+        """Keyset-paginated vacancy list for the TUI.
 
-        Ordered by (score, id) with a seek predicate on `after` -- never
+        Ordered by (sort_expr, id) with a seek predicate on `after` -- never
         OFFSET, which silently duplicates or skips rows across pages when a
         status change mid-browse shrinks the filtered result set out from
         under a numeric offset. `after` is the (row["_sort_key"], row["id"])
         of the last row already loaded by the caller; pass None for the
-        first page. Named (`:name`) parameters, not positional `?`, because
-        the WHERE clause is assembled dynamically from several optional
-        pieces -- positional params would be fragile to reorder here.
+        first page. Each row carries its own `_sort_key` so the caller never
+        has to reimplement the COALESCE-sentinel logic to build the next
+        cursor. Named (`:name`) parameters, not positional `?`, because the
+        WHERE clause is assembled dynamically from several optional pieces.
         """
+        if sort_by not in _SORT_COLUMNS:
+            raise ValueError(f"sort_by must be one of {sorted(_SORT_COLUMNS)}, got {sort_by!r}")
+        if sort_dir not in ("asc", "desc"):
+            raise ValueError(f"sort_dir must be 'asc' or 'desc', got {sort_dir!r}")
+
         params: dict[str, object] = {
             "profile_hash": profile_hash,
             "threshold": threshold,
             "page_size": page_size,
         }
+        sort_col = _SORT_COLUMNS[sort_by]
+        if sort_by == "posted_at":
+            sort_expr = f"COALESCE({sort_col}, :null_sentinel)"
+            params["null_sentinel"] = _NULL_SENTINELS[sort_dir]
+        else:
+            sort_expr = sort_col
+
         if only_status:
             status_clause = "COALESCE(s.status,'new') = :status"
             params["status"] = only_status
@@ -361,8 +391,10 @@ class Store:
         ]
         if after is not None:
             after_value, after_id = after
+            op = "<" if sort_dir == "desc" else ">"
             where.append(
-                "(r.score < :after_value OR (r.score = :after_value AND v.id > :after_id))"
+                f"({sort_expr} {op} :after_value "
+                f"OR ({sort_expr} = :after_value AND v.id > :after_id))"
             )
             params["after_value"] = after_value
             params["after_id"] = after_id
@@ -371,12 +403,12 @@ class Store:
             SELECT v.*, r.score, r.verdict, r.matched_skills, r.missing_skills,
                    r.hard_blockers, r.model, r.evidence,
                    COALESCE(s.status,'new') AS status,
-                   r.score AS _sort_key
+                   {sort_expr} AS _sort_key
             FROM ratings r
             JOIN vacancies v ON v.id = r.vacancy_id
             LEFT JOIN vacancy_status s ON s.vacancy_id = v.id
             WHERE {" AND ".join(where)}
-            ORDER BY r.score DESC, v.id ASC
+            ORDER BY {sort_expr} {sort_dir.upper()}, v.id ASC
             LIMIT :page_size
         """
         return list(self.conn.execute(sql, params))
