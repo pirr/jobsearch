@@ -402,3 +402,63 @@ def test_ranked_page_remote_only_excludes_non_remote_and_unknown(store, profile)
         store.save_rating(v.id, h, "f", score=80)
 
     assert [r["id"] for r in store.ranked_page(h, 0, remote_only=True)] == [remote.id]
+
+
+# ---- search_vacancies / list_duplicates ------------------------------------
+
+def test_search_vacancies_matches_across_all_vacancies_ignoring_rating(store):
+    v = make_vacancy(title="Unrated Backend Role", company="Acme")
+    store.upsert_vacancies([v])  # never rated -- must still be findable
+
+    results = store.search_vacancies("backend")
+    assert [r["id"] for r in results] == [v.id]
+
+
+def test_search_vacancies_matches_company_location_and_id_prefix(store):
+    v = make_vacancy(company="Globex", location_raw="Lisbon")
+    store.upsert_vacancies([v])
+    assert [r["id"] for r in store.search_vacancies("globex")] == [v.id]
+    assert [r["id"] for r in store.search_vacancies("lisbon")] == [v.id]
+    assert [r["id"] for r in store.search_vacancies(v.id[:8])] == [v.id]
+
+
+def test_search_vacancies_respects_limit(store):
+    for i in range(5):
+        # company varies too -- dedupe.vacancy_id() hashes (company, title,
+        # location, description), not source_id, so varying only source_id
+        # would collapse all 5 into a single upserted row.
+        store.upsert_vacancies([make_vacancy(source_id=str(i), title="Backend Role", company=f"Co{i}")])
+    assert len(store.search_vacancies("backend", limit=3)) == 3
+
+
+def test_list_duplicates_shows_hidden_and_canonical_titles(store):
+    dup = make_vacancy(source_id="1", title="Dup Title", company="DupCo")
+    canonical = make_vacancy(source_id="2", title="Canonical Title", company="CanCo")
+    store.upsert_vacancies([dup, canonical])
+    store.mark_duplicate(dup.id, canonical.id)
+
+    rows = store.list_duplicates()
+    assert len(rows) == 1
+    assert rows[0]["vacancy_id"] == dup.id
+    assert rows[0]["canonical_id"] == canonical.id
+    assert rows[0]["dup_title"] == "Dup Title" and rows[0]["dup_company"] == "DupCo"
+    assert rows[0]["canonical_title"] == "Canonical Title"
+
+
+def test_list_duplicates_keyset_pagination_covers_every_pair_once(store):
+    ids = []
+    for i in range(3):
+        dup = make_vacancy(source_id=f"dup{i}", title=f"Dup {i}")
+        canonical = make_vacancy(source_id=f"can{i}", title=f"Canonical {i}")
+        store.upsert_vacancies([dup, canonical])
+        store.mark_duplicate(dup.id, canonical.id)
+        ids.append(dup.id)
+
+    page1 = store.list_duplicates(page_size=2)
+    assert len(page1) == 2
+    cursor = (page1[-1]["marked_at"], page1[-1]["vacancy_id"])
+    page2 = store.list_duplicates(after=cursor, page_size=2)
+
+    seen = [r["vacancy_id"] for r in page1] + [r["vacancy_id"] for r in page2]
+    assert sorted(seen) == sorted(ids)
+    assert len(seen) == len(set(seen))  # no duplicate/skip across pages

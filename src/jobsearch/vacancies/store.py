@@ -489,6 +489,56 @@ class Store:
         self.conn.execute("DELETE FROM vacancy_duplicates WHERE vacancy_id = ?", (vacancy_id,))
         self.conn.commit()
 
+    def search_vacancies(self, query: str, limit: int = 20) -> list[sqlite3.Row]:
+        """Match title/company/location/id, ignoring rating/status/threshold
+        entirely -- used by the duplicate picker, which must be able to
+        point at any vacancy in the database, not just one currently
+        ranked and visible in the TUI's main list."""
+        like = f"%{query}%"
+        return list(
+            self.conn.execute(
+                """
+                SELECT * FROM vacancies
+                WHERE title LIKE ? OR company LIKE ? OR location_raw LIKE ? OR id LIKE ?
+                ORDER BY fetched_at DESC
+                LIMIT ?
+                """,
+                (like, like, like, like, limit),
+            )
+        )
+
+    def list_duplicates(
+        self, *, after: tuple[str, str] | None = None, page_size: int = 50
+    ) -> list[sqlite3.Row]:
+        """Hidden-vacancy -> canonical-vacancy pairs, newest mark first.
+
+        Keyset-paginated on (marked_at, vacancy_id) for the same reason
+        ranked_page() is: stable pages even if new marks land mid-browse.
+        """
+        where = []
+        params: dict[str, object] = {"page_size": page_size}
+        if after is not None:
+            after_marked_at, after_vacancy_id = after
+            where.append(
+                "(d.marked_at < :after_marked_at "
+                "OR (d.marked_at = :after_marked_at AND d.vacancy_id > :after_vacancy_id))"
+            )
+            params["after_marked_at"] = after_marked_at
+            params["after_vacancy_id"] = after_vacancy_id
+        where_sql = f"WHERE {' AND '.join(where)}" if where else ""
+        sql = f"""
+            SELECT d.vacancy_id, d.canonical_id, d.marked_at,
+                   v1.title AS dup_title, v1.company AS dup_company,
+                   v2.title AS canonical_title, v2.company AS canonical_company
+            FROM vacancy_duplicates d
+            JOIN vacancies v1 ON v1.id = d.vacancy_id
+            JOIN vacancies v2 ON v2.id = d.canonical_id
+            {where_sql}
+            ORDER BY d.marked_at DESC, d.vacancy_id ASC
+            LIMIT :page_size
+        """
+        return list(self.conn.execute(sql, params))
+
     # ---- ingest runs ---------------------------------------------------
 
     def start_run(self, source: str) -> int:
