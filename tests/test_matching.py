@@ -376,6 +376,43 @@ def test_restricted_vacancies_still_get_a_reserved_floor_with_a_large_reachable_
     assert restricted.id in store.rated_ids(profile.hash())
 
 
+def test_soft_location_violation_does_not_win_a_shortlist_slot_over_a_satisfying_vacancy(store):
+    """Mirrors test_restricted_vacancies_are_shortlisted_only_after_reachable_ones,
+    but for filters.py's soft constraints (checkable deterministically off
+    structured fields, no LLM needed) instead of eligibility.py's geo/visa
+    ones: a vacancy violating a soft location preference must not spend the
+    one shortlist slot ahead of a satisfying vacancy, even when its raw
+    retrieval relevance is higher (verified directly: BM25 scores the
+    wrong-location posting 3.84 vs. 0.77 for the right-location one, purely
+    from denser keyword overlap)."""
+    p = CandidateProfile(
+        headline="Senior Python Backend Engineer",
+        skills=["Python", "Django", "Kubernetes", "PostgreSQL"],
+        constraints=[Constraint(kind="location", value="Berlin", stated=False)],
+    )
+    wrong_location = make_vacancy(
+        source_id="nyc", title="Senior Python Backend Engineer", location_raw="New York",
+        description="Python Django Kubernetes PostgreSQL backend engineer. "
+                     "Python Django Kubernetes PostgreSQL Python Django.",
+        is_remote=False,
+    )
+    right_location = make_vacancy(
+        source_id="berlin", title="Backend Engineer", location_raw="Berlin",
+        description="Python backend role.",
+        is_remote=False,
+    )
+    # Inserted wrong-location-first so a naive relevance-only ranking could
+    # still land it first; the satisfying one must win the single slot.
+    store.upsert_vacancies([wrong_location, right_location])
+    llm = FakeLLM([{"score": 70, "matched_skills": [], "missing_skills": [],
+                    "summary_fit": "", "summary_gap": ""} for _ in range(5)])
+
+    report = run_match(store, p, llm, BM25Retriever(), shortlist_size=1)
+
+    assert report.rated == 1
+    assert store.ranked(p.hash(), 0, 10)[0]["id"] == right_location.id
+
+
 def test_force_reconsiders_a_restricted_vacancy_crowded_out_by_reachable_ones(store, profile):
     """Reproduces the real bug: a vacancy classified restricted, and already
     rated before this eligibility logic existed, must still be reachable via

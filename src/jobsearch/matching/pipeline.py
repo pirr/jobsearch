@@ -80,6 +80,18 @@ def run_match(
     for r in by_relevance:
         (reachable if eligibility.is_reachable(eligibility.classify(r)) else restricted).append(r)
 
+    # A soft constraint filters.py can already check deterministically off
+    # structured fields (remote/location/employment_type -- no LLM needed)
+    # must not spend a shortlist slot ahead of a vacancy with none, even when
+    # its raw retrieval relevance is higher: the LLM call that slot buys is
+    # wasted on a vacancy whose score will just be docked for the same
+    # violation afterward anyway. Stable sort preserves relevance order
+    # within each group. Not a bucket with its own reserved floor like
+    # restricted/reachable above -- unlike geo/visa restriction, there is no
+    # "otherwise permanently invisible" risk here to protect against, so a
+    # plain reorder is enough.
+    reachable.sort(key=lambda r: soft_penalty(profile, r)[0] > 0)
+
     reserved = min(len(restricted), max(1, shortlist_size // 10)) if restricted else 0
     if reachable:
         # Never let the reserve eat the only slot(s) reachable candidates
