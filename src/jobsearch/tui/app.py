@@ -42,6 +42,7 @@ class JobsearchApp(App):
     #filterbar { height: 3; }
     #filterbar Input { width: 1fr; }
     #filterbar Select { width: 22; }
+    #filterbar Static { width: auto; }
     """
     TITLE = "jobsearch"
 

@@ -74,6 +74,23 @@ async def test_engine_respects_view_and_sort_state_directly(store, profile):
         assert table.row_count == 2
 
 
+async def test_search_input_gets_a_usable_width_not_just_its_border(store, profile):
+    # Real bug: the trailing "remote only" Static label has no width rule,
+    # so it greedily claims the filter bar's remaining space and the
+    # search Input's `1fr` collapses to its intrinsic minimum (border +
+    # padding only, zero columns of actual content) -- nothing typed, or
+    # even the placeholder, can ever render in that.
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import Input
+
+    seed_active(store, profile, n=1)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test(size=(100, 24)) as pilot:
+        await pilot.pause()
+        search = app.query_one("#search", Input)
+        assert search.region.width >= 30
+
+
 async def test_no_profile_screen_shown_when_profile_path_missing(tmp_path, store):
     from jobsearch.config import Config
     from jobsearch.tui.app import JobsearchApp
