@@ -9,6 +9,7 @@ WORKDIR /app
 # real source tree present for setuptools to discover packages. tomllib is
 # stdlib on this base image, so no extra tooling is needed to read the list.
 COPY pyproject.toml ./
+RUN apt update -y && apt upgrade -y && apt install -y vim
 RUN python3 -c "import tomllib; print('\n'.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['dependencies']))" > /tmp/requirements.txt \
     && pip install --no-cache-dir -r /tmp/requirements.txt
 
