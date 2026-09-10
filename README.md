@@ -55,7 +55,8 @@ to listen on `0.0.0.0` rather than only `127.0.0.1`).
 ```bash
 jobsearch ingest                    # fetch vacancies into jobsearch.db
 jobsearch ingest --source jobicy    # or just one: arbeitnow|remoteok|jobicy|himalayas|remotive|
-                                     #   adzuna|greenhouse|lever|ashby|smartrecruiters
+                                     #   adzuna|greenhouse|lever|ashby|smartrecruiters|
+                                     #   workable|recruitee
 jobsearch doctor                    # check sources, list dead company slugs
 jobsearch discover-ats "Some Company"           # guess & probe ATS slugs for a company name
 jobsearch discover-ats "Some Company" --write   # ...and append live hits to companies.yaml
@@ -99,14 +100,14 @@ changes needed, a pseudo-TTY is allocated the same way any interactive
 
 ## Sources
 
-`data/companies.yaml` lists Greenhouse/Lever/Ashby/SmartRecruiters company
-slugs verified live during design (Europe/DACH-leaning, plus a US/UK batch).
-Slugs rot — `jobsearch doctor` reports dead ones to prune, and
-`jobsearch discover-ats "Company Name" --write` finds new ones: it guesses
-slug candidates from a company name and probes each ATS platform for a live
-board, with no auth and no LLM tokens involved.
+`data/companies.yaml` lists Greenhouse/Lever/Ashby/SmartRecruiters/Workable/
+Recruitee company slugs verified live during design (Europe/DACH-leaning,
+plus a US/UK batch). Slugs rot — `jobsearch doctor` reports dead ones to
+prune, and `jobsearch discover-ats "Company Name" --write` finds new ones: it
+guesses slug candidates from a company name and probes each ATS platform for
+a live board, with no auth and no LLM tokens involved.
 
-SmartRecruiters is the odd one out among the four ATS platforms: its listing
+SmartRecruiters is the odd one out among the six ATS platforms: its listing
 endpoint never inlines a job's description, so each posting needs a second,
 per-job request. To keep one large company from turning into hundreds of
 requests every ingest run, postings are capped (`max_postings`, default 150)
@@ -130,7 +131,7 @@ the account, and Belarus isn't an Adzuna market at all.
 ## Tests
 
 ```bash
-pytest              # 191 tests, all offline (recorded fixtures, no network, no LLM)
+pytest              # 194 tests, all offline (recorded fixtures, no network, no LLM)
 ```
 
 `jobsearch eval` is not part of the suite — it measures retrieval quality
