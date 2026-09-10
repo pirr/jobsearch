@@ -33,6 +33,7 @@ _SORT_OPTIONS = [
 # down to just its key, under one shared "Status" label, so they and the
 # rest of the footer (notably the reason key) stay visible.
 _STATUS_GROUP = Binding.Group("Status", compact=True)
+_SEARCH_GROUP = Binding.Group("Search", compact=True)
 
 
 class JobsearchApp(App):
@@ -61,6 +62,7 @@ class JobsearchApp(App):
         Binding("c", "cycle_view", "Cycle view"),
         Binding("r", "refresh", "Refresh"),
         Binding("q", "quit", "Quit"),
+        Binding("escape", "cancel_search", "Cancel search", show=False, group=_SEARCH_GROUP),
     ]
 
     def __init__(self, *, config=None, store=None, candidate=None, llm=None) -> None:
@@ -355,3 +357,14 @@ class JobsearchApp(App):
             if vacancy_id in self._loaded_ids:
                 table.remove_row(vacancy_id)
                 self._loaded_ids.discard(vacancy_id)
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id != "search":
+            return
+        self.query_one("#table", DataTable).focus()
+
+    def action_cancel_search(self) -> None:
+        if self.focused is not self.query_one("#search", Input):
+            return
+        self.query_one("#search", Input).clear()
+        self.query_one("#table", DataTable).focus()
