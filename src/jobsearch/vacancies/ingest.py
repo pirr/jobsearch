@@ -21,8 +21,10 @@ from .sources.ats import ATS_SOURCES
 from .sources.base import SourceError, VacancySource
 from .sources.himalayas import HimalayasSource
 from .sources.jobicy import JobicySource
+from .sources.remotejobsorg import RemoteJobsOrgSource
 from .sources.remoteok import RemoteOkSource
 from .sources.remotive import RemotiveSource
+from .sources.workingnomads import WorkingNomadsSource
 from .store import Store
 
 USER_AGENT = "jobsearch-mvp/0.1 (+https://github.com/local/jobsearch)"
@@ -31,6 +33,7 @@ USER_AGENT = "jobsearch-mvp/0.1 (+https://github.com/local/jobsearch)"
 # own. Depth (ATS) sources come from data/companies.yaml instead.
 BREADTH_SOURCES: list[type[VacancySource]] = [
     ArbeitnowSource, RemoteOkSource, JobicySource, HimalayasSource, RemotiveSource,
+    WorkingNomadsSource, RemoteJobsOrgSource,
 ]
 
 

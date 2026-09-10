@@ -21,8 +21,10 @@ from jobsearch.vacancies.sources.ats import (
 from jobsearch.vacancies.sources.base import SourceError
 from jobsearch.vacancies.sources.himalayas import HimalayasSource
 from jobsearch.vacancies.sources.jobicy import JobicySource
+from jobsearch.vacancies.sources.remotejobsorg import RemoteJobsOrgSource
 from jobsearch.vacancies.sources.remoteok import RemoteOkSource
 from jobsearch.vacancies.sources.remotive import RemotiveSource
+from jobsearch.vacancies.sources.workingnomads import WorkingNomadsSource
 
 
 async def test_arbeitnow_normalizes_double_escaped_html():
@@ -179,6 +181,42 @@ async def test_himalayas_uses_guid_as_source_id_and_stops_without_cursor():
     assert v.source == "himalayas" and v.company and v.title
     assert v.source_id == v.raw["guid"]
     assert v.is_remote is True
+    assert "<" not in v.description[:200]
+    assert len(client.requests) == 1
+
+
+async def test_workingnomads_uses_url_as_source_id_and_is_always_remote():
+    # No "id" field exists on a Working Nomads job (unlike RemoteOK/Remotive/
+    # Jobicy), so the job's own url doubles as source_id, the same fallback
+    # Himalayas uses for guid.
+    client = FakeClient(fixture("workingnomads"))
+    vacancies = await WorkingNomadsSource().fetch(client)
+    assert vacancies
+    v = vacancies[0]
+    assert v.source == "workingnomads" and v.company and v.title
+    assert v.source_id == v.url and v.url.startswith("https://www.workingnomads.com/")
+    assert v.is_remote is True
+    assert "<" not in v.description[:200]
+    # pub_date arrives as ISO-8601 with an explicit offset, not UTC or epoch --
+    # normalize_timestamp should convert it rather than dropping it.
+    assert v.posted_at is not None
+    assert len(client.requests) == 1
+
+
+async def test_remotejobsorg_reads_nested_company_name_and_ignores_pagination():
+    # pagination.total runs into the thousands; only the first (bounded) page
+    # is ever fetched, so exactly one request happens and pagination is simply
+    # not followed.
+    client = FakeClient(fixture("remotejobsorg"))
+    vacancies = await RemoteJobsOrgSource().fetch(client)
+    assert vacancies
+    v = vacancies[0]
+    assert v.source == "remotejobsorg" and v.title and v.url
+    fx = fixture("remotejobsorg")
+    assert v.company == fx["data"][0]["company"]["name"]
+    assert v.source_id == fx["data"][0]["id"]
+    assert v.is_remote is True
+    assert v.employment_type == "Full-time"
     assert "<" not in v.description[:200]
     assert len(client.requests) == 1
 
