@@ -154,7 +154,7 @@ class AshbySource(_CompanySource):
 
 
 class SmartRecruitersSource(_CompanySource):
-    """Unlike the other three, the list endpoint never inlines a description --
+    """Unlike the other six, the list endpoint never inlines a description --
     a job's `jobAd.sections` only comes back from a second, per-posting GET
     (the list row's own `ref` field is that detail URL, so no URL template is
     duplicated here). A company with hundreds of open roles would otherwise

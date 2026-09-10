@@ -104,7 +104,7 @@ def ingest_cmd(
     source: str = typer.Option(
         None, "--source", "-s",
         help=(
-            "arbeitnow|remoteok|jobicy|himalayas|remotive|adzuna|"
+            "arbeitnow|remoteok|jobicy|himalayas|remotive|workingnomads|remotejobsorg|adzuna|"
             "greenhouse|lever|ashby|smartrecruiters|workable|recruitee|teamtailor"
         ),
     ),

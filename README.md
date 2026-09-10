@@ -107,6 +107,13 @@ Slugs rot — `jobsearch doctor` reports dead ones to prune, and
 slug candidates from a company name and probes each ATS platform for a live
 board, with no auth and no LLM tokens involved.
 
+Workable, Recruitee, and Teamtailor are also wired up as ATS platforms in
+code, but `data/companies.yaml` has no verified slugs for them yet — a live
+`discover-ats` sweep over the companies already in that file found zero
+hits, so all three currently yield no vacancies until someone finds and
+verifies real slugs for them, e.g. via `jobsearch discover-ats --write`
+against a broader/different set of company names.
+
 SmartRecruiters is the odd one out among the seven ATS platforms: its listing
 endpoint never inlines a job's description, so each posting needs a second,
 per-job request. To keep one large company from turning into hundreds of

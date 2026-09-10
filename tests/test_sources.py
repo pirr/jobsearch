@@ -1,6 +1,7 @@
 """Adapters run against payloads recorded from the live APIs."""
 
 import asyncio
+from datetime import datetime, timezone
 
 import pytest
 from conftest import FakeClient, fixture
@@ -126,7 +127,7 @@ async def test_recruitee_published_at_survives_the_non_iso_timestamp():
     fx = fixture("recruitee")
     assert fx["offers"][0]["published_at"].endswith(" UTC")
     vacancies = await RecruiteeSource("bunq").fetch(FakeClient(fx))
-    assert vacancies[0].posted_at is not None
+    assert vacancies[0].posted_at == datetime(2026, 9, 7, 12, 5, 26, tzinfo=timezone.utc)
 
 
 async def test_teamtailor_description_needs_no_second_call():
