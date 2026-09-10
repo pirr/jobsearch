@@ -85,7 +85,7 @@ class JobsearchApp(App):
     def compose(self) -> ComposeResult:
         yield Header()
         with Horizontal(id="filterbar"):
-            yield Input(placeholder="search title/company/location", id="search")
+            yield Input(placeholder="press / to search title/company/location", id="search")
             yield Select(_SORT_OPTIONS, value="score", id="sort", allow_blank=False)
             yield Button("↓ desc", id="sort-dir")
             yield Switch(id="remote-only")
@@ -111,6 +111,11 @@ class JobsearchApp(App):
                 "no rated vacancies for this profile -- run `jobsearch match` first"))
             return
         self.load_first_page()
+        # Explicit, not left to Textual's AUTO_FOCUS heuristic -- reported in
+        # the wild as an unfocused table (blurred/gray cursor row, hotkeys
+        # needing a mouse click first) even though this same heuristic
+        # focuses it fine under the headless test driver.
+        self.query_one("#table", DataTable).focus()
 
     def _setup_columns_for_view(self) -> None:
         table = self.query_one("#table", DataTable)

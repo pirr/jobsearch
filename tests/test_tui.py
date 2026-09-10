@@ -29,6 +29,24 @@ async def test_app_renders_active_vacancies_score_desc_on_mount(store, profile):
         assert app._loaded_ids == set(ids)
 
 
+async def test_table_has_keyboard_focus_right_after_mount(store, profile):
+    # Real bug report: outside the headless test driver, nothing ends up
+    # with actual Textual focus at startup -- the cursor row renders in its
+    # blurred/gray style (DataTable's :focus CSS never applies) and hotkeys
+    # need a mouse click first. Relying on Textual's implicit AUTO_FOCUS
+    # heuristic isn't reliable across environments, so on_mount now grabs
+    # focus explicitly.
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable
+
+    seed_active(store, profile, n=1)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        table = app.query_one("#table", DataTable)
+        assert table.has_focus
+
+
 async def test_engine_respects_view_and_sort_state_directly(store, profile):
     # Exercises the data engine at its own interface (state attrs +
     # load_first_page) -- the actual Input/Select widgets that drive these
