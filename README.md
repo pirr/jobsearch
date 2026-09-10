@@ -55,8 +55,8 @@ to listen on `0.0.0.0` rather than only `127.0.0.1`).
 ```bash
 jobsearch ingest                    # fetch vacancies into jobsearch.db
 jobsearch ingest --source jobicy    # or just one: arbeitnow|remoteok|jobicy|himalayas|remotive|
-                                     #   adzuna|greenhouse|lever|ashby|smartrecruiters|
-                                     #   workable|recruitee
+                                     #   workingnomads|remotejobsorg|adzuna|greenhouse|lever|
+                                     #   ashby|smartrecruiters|workable|recruitee
 jobsearch doctor                    # check sources, list dead company slugs
 jobsearch discover-ats "Some Company"           # guess & probe ATS slugs for a company name
 jobsearch discover-ats "Some Company" --write   # ...and append live hits to companies.yaml
@@ -113,14 +113,17 @@ per-job request. To keep one large company from turning into hundreds of
 requests every ingest run, postings are capped (`max_postings`, default 150)
 rather than fetched exhaustively.
 
-Five sources need no company list and cover many companies on their own:
+Seven sources need no company list and cover many companies on their own:
 Arbeitnow (~2,000 active EU jobs), RemoteOK (global remote tech jobs),
 Jobicy (queried with `geo=europe&industry=dev`, so only European engineering
 roles), Himalayas (global remote jobs, structured per-job country
-restrictions, bounded cursor pagination) and Remotive (global remote jobs;
-its free API currently exposes only ~18 jobs, so it adds little volume).
+restrictions, bounded cursor pagination), Remotive (global remote jobs;
+its free API currently exposes only ~18 jobs, so it adds little volume),
+Working Nomads (global remote jobs, one bounded request, no pagination) and
+RemoteJobs.org (global remote jobs; only the first page of its own paginated
+feed is fetched, same bounded-slice tradeoff as Himalayas/Adzuna).
 
-A sixth, Adzuna, is optional: unlike the others it's a general job board (not
+An eighth, Adzuna, is optional: unlike the others it's a general job board (not
 remote-only) and needs a free App ID/Key from
 [developer.adzuna.com](https://developer.adzuna.com/signup) — set
 `JOBSEARCH_ADZUNA_APP_ID`/`JOBSEARCH_ADZUNA_APP_KEY` in `.env` to enable it
@@ -131,7 +134,7 @@ the account, and Belarus isn't an Adzuna market at all.
 ## Tests
 
 ```bash
-pytest              # 194 tests, all offline (recorded fixtures, no network, no LLM)
+pytest              # 196 tests, all offline (recorded fixtures, no network, no LLM)
 ```
 
 `jobsearch eval` is not part of the suite — it measures retrieval quality
