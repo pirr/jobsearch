@@ -56,7 +56,7 @@ to listen on `0.0.0.0` rather than only `127.0.0.1`).
 jobsearch ingest                    # fetch vacancies into jobsearch.db
 jobsearch ingest --source jobicy    # or just one: arbeitnow|remoteok|jobicy|himalayas|remotive|
                                      #   workingnomads|remotejobsorg|adzuna|greenhouse|lever|
-                                     #   ashby|smartrecruiters|workable|recruitee
+                                     #   ashby|smartrecruiters|workable|recruitee|teamtailor
 jobsearch doctor                    # check sources, list dead company slugs
 jobsearch discover-ats "Some Company"           # guess & probe ATS slugs for a company name
 jobsearch discover-ats "Some Company" --write   # ...and append live hits to companies.yaml
@@ -107,7 +107,7 @@ Slugs rot — `jobsearch doctor` reports dead ones to prune, and
 slug candidates from a company name and probes each ATS platform for a live
 board, with no auth and no LLM tokens involved.
 
-SmartRecruiters is the odd one out among the six ATS platforms: its listing
+SmartRecruiters is the odd one out among the seven ATS platforms: its listing
 endpoint never inlines a job's description, so each posting needs a second,
 per-job request. To keep one large company from turning into hundreds of
 requests every ingest run, postings are capped (`max_postings`, default 150)
@@ -134,7 +134,7 @@ the account, and Belarus isn't an Adzuna market at all.
 ## Tests
 
 ```bash
-pytest              # 196 tests, all offline (recorded fixtures, no network, no LLM)
+pytest              # 198 tests, all offline (recorded fixtures, no network, no LLM)
 ```
 
 `jobsearch eval` is not part of the suite — it measures retrieval quality

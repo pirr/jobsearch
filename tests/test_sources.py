@@ -16,6 +16,7 @@ from jobsearch.vacancies.sources.ats import (
     LeverSource,
     RecruiteeSource,
     SmartRecruitersSource,
+    TeamtailorSource,
     WorkableSource,
 )
 from jobsearch.vacancies.sources.base import SourceError
@@ -126,6 +127,36 @@ async def test_recruitee_published_at_survives_the_non_iso_timestamp():
     assert fx["offers"][0]["published_at"].endswith(" UTC")
     vacancies = await RecruiteeSource("bunq").fetch(FakeClient(fx))
     assert vacancies[0].posted_at is not None
+
+
+async def test_teamtailor_description_needs_no_second_call():
+    client = FakeClient(fixture("teamtailor"))
+    vacancies = await TeamtailorSource("proxima").fetch(client)
+    assert len(client.requests) == 1  # one GET, like Recruitee -- no detail call
+    assert len(vacancies) == 2
+    v = vacancies[0]
+    assert v.source == "teamtailor" and v.company == "Proxima"
+    assert "<" not in v.description and len(v.description) > 100
+    assert v.location_city == "Chicago"
+    assert v.location_country == "US"
+    assert v.posted_at is not None
+    assert v.url.startswith("https://proxima.teamtailor.com/jobs/")
+
+
+async def test_teamtailor_joins_multiple_office_locations():
+    # The live "Senior Azure Platform Engineer" posting lists four
+    # jobLocation entries (Cardiff, London, Leeds, and Cardiff again with a
+    # slightly different address) -- location_city/country take only the
+    # first, but location_raw must not silently drop or duplicate the rest.
+    fx = fixture("teamtailor")
+    assert len(fx["items"][1]["_jobposting"]["jobLocation"]) == 4
+    vacancies = await TeamtailorSource("proxima").fetch(FakeClient(fx))
+    v = vacancies[1]
+    assert v.location_city == "Cardiff" and v.location_country == "GB"
+    assert v.location_raw == "Cardiff, London, Leeds"  # de-duplicated
+    # No live tenant probed ever surfaced a remote signal -- None reflects a
+    # real gap in the source data, not a missed field mapping.
+    assert v.is_remote is None
 
 
 def test_build_sources_wires_smartrecruiters_from_companies_yaml(tmp_path):

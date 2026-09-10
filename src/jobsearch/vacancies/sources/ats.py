@@ -1,7 +1,7 @@
-"""Greenhouse, Lever, Ashby, SmartRecruiters, Workable and Recruitee -- the
-depth sources.
+"""Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee and
+Teamtailor -- the depth sources.
 
-All six are unauthenticated public endpoints returning full descriptions
+All seven are unauthenticated public endpoints returning full descriptions
 (SmartRecruiters needs a second per-posting call for its; see below), but each
 has a different response shape, and a company slug that worked last month may
 404 today (probing found personio, contentful, getyourguide, blinkist and
@@ -326,6 +326,68 @@ class RecruiteeSource(_CompanySource):
         )
 
 
+class TeamtailorSource(_CompanySource):
+    """`{tenant}.teamtailor.com/jobs.json` is a JSON Feed 1.1 (`content-type:
+    application/feed+json`), not a bespoke schema -- verified live against six
+    real tenants (career/recruitgo/oneractive/viviennewestwood/proxima/
+    inforcer.teamtailor.com) on 2026-09-10. The full HTML job body already
+    rides inline as `content_html` (thousands of characters, not a teaser),
+    same shape as Recruitee -- no second per-posting call needed. Each item
+    also carries a schema.org `_jobposting` block that the plain feed fields
+    don't have on their own (structured location, `hiringOrganization`); none
+    of the six tenants ever populated `employmentType` on it, so that mapping
+    is best-effort/likely-always-None rather than proven live.
+    """
+
+    name = "teamtailor"
+
+    async def fetch(self, client: httpx.AsyncClient) -> Sequence[Vacancy]:
+        url = f"https://{self.company}.teamtailor.com/jobs.json"
+        payload = await get_json(client, url, retries=self.retries)
+        return self.finalize([self._to_vacancy(item) for item in payload.get("items", [])])
+
+    def _to_vacancy(self, row: dict) -> Vacancy:
+        posting = row.get("_jobposting") or {}
+        # A posting can list several office locations at once (real proxima
+        # postings span 3-4 UK cities) -- unlike every single-location ATS
+        # above, city/country come from the first entry only, but the raw
+        # string joins every distinct city (de-duplicated: one live posting
+        # repeated "Cardiff" twice with a slightly different address) rather
+        # than silently dropping the rest.
+        places = [loc.get("address") or {} for loc in (posting.get("jobLocation") or [])]
+        cities = list(
+            dict.fromkeys(p.get("addressLocality") for p in places if p.get("addressLocality"))
+        )
+        first = places[0] if places else {}
+        organization = posting.get("hiringOrganization") or {}
+        return Vacancy(
+            source=self.name,
+            source_id=str(row.get("id", "")),
+            url=row.get("url", ""),
+            company=organization.get("name") or self.company,
+            title=row.get("title", ""),
+            # `_jobposting.description` duplicates `content_html` verbatim on
+            # every tenant probed -- content_html is the feed's own field, so
+            # it's used directly rather than reaching into the schema.org copy.
+            description=strip_html(row.get("content_html")),
+            location_raw=", ".join(cities),
+            location_city=first.get("addressLocality") or None,
+            location_country=(first.get("addressCountry") or "").upper() or None,
+            # No live posting across any of the six tenants surfaced a remote
+            # signal (no "Remote" locality, no dedicated flag) -- unlike
+            # Workable/SmartRecruiters, this is a real gap, not an unmapped
+            # field: None reflects that honestly rather than guessing from
+            # description text the way normalize_location does for a string.
+            is_remote=None,
+            employment_type=posting.get("employmentType"),
+            # Unlike Recruitee's " UTC"-suffixed timestamp, date_published
+            # arrives as ordinary offset ISO-8601 ("+02:00" or "Z") --
+            # normalize_timestamp's fromisoformat parses it with no rewrite.
+            posted_at=normalize_timestamp(row.get("date_published")),
+            raw=row,
+        )
+
+
 ATS_SOURCES = {
     "greenhouse": GreenhouseSource,
     "lever": LeverSource,
@@ -333,4 +395,5 @@ ATS_SOURCES = {
     "smartrecruiters": SmartRecruitersSource,
     "workable": WorkableSource,
     "recruitee": RecruiteeSource,
+    "teamtailor": TeamtailorSource,
 }

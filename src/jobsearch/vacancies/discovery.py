@@ -35,6 +35,7 @@ from .sources.base import SourceError
 # without silently breaking (or being silently included in) probing here.
 PROBEABLE_ATS: set[str] = {
     "greenhouse", "lever", "ashby", "smartrecruiters", "workable", "recruitee",
+    "teamtailor",
 }
 
 _LEGAL_SUFFIXES = {
