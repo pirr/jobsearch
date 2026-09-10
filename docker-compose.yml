@@ -29,6 +29,15 @@ services:
     environment:
       JOBSEARCH_LLAMACPP_HOST: ${JOBSEARCH_LLAMACPP_HOST:-http://host.docker.internal:8080}
       OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      # Docker doesn't forward the host's TERM/COLORTERM by itself. Without
+      # them the TUI (Textual) can't detect real terminal color support and
+      # falls back to its minimal ANSI-only styling -- for the search Input
+      # specifically, that sets typed-text color equal to its own
+      # background, so the cursor is visible but every character you type
+      # is not. Forwarding the host's actual values (or a sane truecolor
+      # default if the host doesn't have them) fixes that.
+      TERM: ${TERM:-xterm-256color}
+      COLORTERM: ${COLORTERM:-truecolor}
       # Pointed inside the mounted directory below, not at bare filenames:
       # bind-mounting a single file that does not yet exist on the host makes
       # Docker silently create a directory there instead, which then breaks
