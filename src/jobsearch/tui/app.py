@@ -27,6 +27,12 @@ _SORT_OPTIONS = [
     ("Score", "score"), ("Date posted", "posted_at"),
     ("Company", "company"), ("Title", "title"),
 ]
+# Six separate footer entries for seen/dismissed/applied/interview/accepted/
+# rejected don't fit an 80-column terminal (a common default, and Docker's
+# fallback when no TTY size is negotiated) -- grouping them collapses each
+# down to just its key, under one shared "Status" label, so they and the
+# rest of the footer (notably the reason key) stay visible.
+_STATUS_GROUP = Binding.Group("Status", compact=True)
 
 
 class JobsearchApp(App):
@@ -41,12 +47,12 @@ class JobsearchApp(App):
 
     BINDINGS = [
         Binding("slash", "focus_search", "Search"),
-        Binding("s", "mark_status('seen')", "Seen"),
-        Binding("d", "mark_status('dismissed')", "Dismissed"),
-        Binding("a", "mark_status('applied')", "Applied"),
-        Binding("i", "mark_status('interview')", "Interview"),
-        Binding("o", "mark_status('accepted')", "Accepted"),
-        Binding("x", "mark_status('rejected')", "Rejected"),
+        Binding("s", "mark_status('seen')", "Seen", group=_STATUS_GROUP),
+        Binding("d", "mark_status('dismissed')", "Dismissed", group=_STATUS_GROUP),
+        Binding("a", "mark_status('applied')", "Applied", group=_STATUS_GROUP),
+        Binding("i", "mark_status('interview')", "Interview", group=_STATUS_GROUP),
+        Binding("o", "mark_status('accepted')", "Accepted", group=_STATUS_GROUP),
+        Binding("x", "mark_status('rejected')", "Rejected", group=_STATUS_GROUP),
         Binding("m", "mark_duplicate", "Duplicate"),
         Binding("u", "unmark_duplicate", "Unmark", show=False),
         Binding("e", "edit_description", "Edit desc"),

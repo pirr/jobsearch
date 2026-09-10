@@ -7,8 +7,14 @@ import json
 
 from rich.markup import escape as rich_escape
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.screen import Screen
 from textual.widgets import Footer, Static
+
+# Kept equal to (but not shared with) app.py's group -- Footer groups by
+# value, not identity, and importing from app.py here would be circular
+# (app.py already imports DetailScreen/NoProfileScreen from this module).
+_STATUS_GROUP = Binding.Group("Status", compact=True)
 
 
 class NoProfileScreen(Screen):
@@ -37,12 +43,12 @@ class DetailScreen(Screen):
     BINDINGS = [
         ("escape", "close", "Back"),
         ("q", "close", "Back"),
-        ("s", "mark_status('seen')", "Seen"),
-        ("d", "mark_status('dismissed')", "Dismissed"),
-        ("a", "mark_status('applied')", "Applied"),
-        ("i", "mark_status('interview')", "Interview"),
-        ("o", "mark_status('accepted')", "Accepted"),
-        ("x", "mark_status('rejected')", "Rejected"),
+        Binding("s", "mark_status('seen')", "Seen", group=_STATUS_GROUP),
+        Binding("d", "mark_status('dismissed')", "Dismissed", group=_STATUS_GROUP),
+        Binding("a", "mark_status('applied')", "Applied", group=_STATUS_GROUP),
+        Binding("i", "mark_status('interview')", "Interview", group=_STATUS_GROUP),
+        Binding("o", "mark_status('accepted')", "Accepted", group=_STATUS_GROUP),
+        Binding("x", "mark_status('rejected')", "Rejected", group=_STATUS_GROUP),
         ("m", "mark_duplicate", "Duplicate"),
         ("e", "edit_description", "Edit desc"),
         ("n", "edit_reason", "Reason"),

@@ -456,6 +456,27 @@ async def test_edit_reason_notifies_on_error_when_no_status_set_yet(store, profi
         assert notifications and notifications[0][1] == "error"
 
 
+async def test_status_and_reason_keys_stay_visible_in_an_80_column_footer(store, profile):
+    # A real bug: adding the interview/accepted/rejected/reason bindings
+    # pushed the footer past 80 columns (a common terminal width, and
+    # Docker's default when no TTY size is negotiated), silently scrolling
+    # "Reason" and others out of view -- present in BINDINGS, invisible in
+    # practice. FooterKey is private API, but it's the only way to check
+    # what's actually rendered on screen rather than just declared.
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets._footer import FooterKey
+
+    seed_active(store, profile, n=1)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test(size=(80, 24)) as pilot:
+        await pilot.pause()
+        visible = {
+            key.key for key in app.screen.query(FooterKey)
+            if key.region.x >= 0 and key.region.x + key.region.width <= 80
+        }
+        assert {"s", "d", "a", "i", "o", "x", "n"} <= visible
+
+
 async def test_status_action_works_from_detail_screen(store, profile):
     from jobsearch.tui.app import JobsearchApp
 
@@ -489,6 +510,23 @@ async def test_interview_binding_works_from_detail_screen(store, profile):
             "SELECT status FROM vacancy_status WHERE vacancy_id=?", (ids[0],)
         ).fetchone()
         assert row["status"] == "accepted"
+
+
+async def test_status_and_reason_keys_stay_visible_in_detail_screen_footer(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets._footer import FooterKey
+
+    seed_active(store, profile, n=1)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test(size=(80, 24)) as pilot:
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+        visible = {
+            key.key for key in app.screen.query(FooterKey)
+            if key.region.x >= 0 and key.region.x + key.region.width <= 80
+        }
+        assert {"s", "d", "a", "i", "o", "x", "n"} <= visible
 
 
 async def test_m_opens_duplicate_picker_modal(store, profile):
