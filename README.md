@@ -100,12 +100,12 @@ changes needed, a pseudo-TTY is allocated the same way any interactive
 
 ## Sources
 
-`data/companies.yaml` lists Greenhouse/Lever/Ashby/SmartRecruiters/Workable/
-Recruitee company slugs verified live during design (Europe/DACH-leaning,
-plus a US/UK batch). Slugs rot — `jobsearch doctor` reports dead ones to
-prune, and `jobsearch discover-ats "Company Name" --write` finds new ones: it
-guesses slug candidates from a company name and probes each ATS platform for
-a live board, with no auth and no LLM tokens involved.
+`data/companies.yaml` lists Greenhouse/Lever/Ashby/SmartRecruiters company
+slugs verified live during design (Europe/DACH-leaning, plus a US/UK batch).
+Slugs rot — `jobsearch doctor` reports dead ones to prune, and
+`jobsearch discover-ats "Company Name" --write` finds new ones: it guesses
+slug candidates from a company name and probes each ATS platform for a live
+board, with no auth and no LLM tokens involved.
 
 SmartRecruiters is the odd one out among the six ATS platforms: its listing
 endpoint never inlines a job's description, so each posting needs a second,
