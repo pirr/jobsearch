@@ -1,6 +1,7 @@
-"""Greenhouse, Lever, Ashby and SmartRecruiters -- the depth sources.
+"""Greenhouse, Lever, Ashby, SmartRecruiters, Workable and Recruitee -- the
+depth sources.
 
-All four are unauthenticated public endpoints returning full descriptions
+All six are unauthenticated public endpoints returning full descriptions
 (SmartRecruiters needs a second per-posting call for its; see below), but each
 has a different response shape, and a company slug that worked last month may
 404 today (probing found personio, contentful, getyourguide, blinkist and
@@ -243,9 +244,93 @@ class SmartRecruitersSource(_CompanySource):
         )
 
 
+class WorkableSource(_CompanySource):
+    name = "workable"
+
+    async def fetch(self, client: httpx.AsyncClient) -> Sequence[Vacancy]:
+        url = f"https://apply.workable.com/api/v1/widget/accounts/{self.company}"
+        payload = await get_json(
+            client, url, params={"details": "true"}, retries=self.retries
+        )
+        # The wrapper has no per-job company field, only this one account-wide
+        # display name -- "Hugging Face", not the "huggingface" slug.
+        company = payload.get("name") or self.company
+        return self.finalize(
+            [self._to_vacancy(j, company) for j in payload.get("jobs", [])]
+        )
+
+    def _to_vacancy(self, row: dict, company: str) -> Vacancy:
+        # Probing found neither a numeric "id" nor a separate "full_description"
+        # field the plan expected -- `details=true` fills the full text into
+        # "description" itself, and "shortcode" is the only identifier. The
+        # per-job "locations" entry already carries an ISO-2 `countryCode`
+        # though, so unlike Greenhouse/Ashby's freeform strings, location here
+        # doesn't need normalize_location's city/country guessing.
+        loc = (row.get("locations") or [{}])[0] or {}
+        city = loc.get("city") or row.get("city") or None
+        raw_loc = ", ".join(
+            p for p in (city, loc.get("region"), loc.get("country") or row.get("country")) if p
+        )
+        return Vacancy(
+            source=self.name,
+            source_id=str(row.get("id") or row.get("shortcode") or ""),
+            url=row.get("url") or row.get("shortlink") or "",
+            company=company,
+            title=row.get("title", ""),
+            description=strip_html(row.get("full_description") or row.get("description")),
+            location_raw=raw_loc,
+            location_city=city,
+            location_country=loc.get("countryCode") or None,
+            is_remote=row.get("telecommuting"),
+            employment_type=row.get("employment_type"),
+            posted_at=normalize_timestamp(row.get("published_on") or row.get("created_at")),
+            raw=row,
+        )
+
+
+class RecruiteeSource(_CompanySource):
+    name = "recruitee"
+
+    async def fetch(self, client: httpx.AsyncClient) -> Sequence[Vacancy]:
+        url = f"https://{self.company}.recruitee.com/api/offers/"
+        payload = await get_json(client, url, retries=self.retries)
+        return self.finalize([self._to_vacancy(o) for o in payload.get("offers", [])])
+
+    def _to_vacancy(self, row: dict) -> Vacancy:
+        # Unlike SmartRecruiters, the full HTML description already rides in
+        # this list response -- no second per-posting call needed.
+        #
+        # `published_at` arrives as "2026-08-14 08:23:10 UTC": a space instead
+        # of "T" and a trailing zone name instead of an offset, which
+        # normalize_timestamp's datetime.fromisoformat can't parse (it fails
+        # silently and returns None). Rewritten into ISO-8601 here, the same
+        # spirit as Lever's own createdAt // 1000 conversion above, rather
+        # than teaching the shared normalizer one source's timestamp dialect.
+        published_at = row.get("published_at")
+        if isinstance(published_at, str) and published_at.endswith(" UTC"):
+            published_at = published_at.replace(" UTC", "").replace(" ", "T") + "+00:00"
+        return Vacancy(
+            source=self.name,
+            source_id=str(row.get("id", "")),
+            url=row.get("careers_url", ""),
+            company=row.get("company_name") or self.company,
+            title=row.get("title", ""),
+            description=strip_html(row.get("description")),
+            location_raw=row.get("location") or row.get("city") or "",
+            location_city=row.get("city") or None,
+            location_country=row.get("country_code") or None,
+            is_remote=row.get("remote"),
+            employment_type=row.get("employment_type_code"),
+            posted_at=normalize_timestamp(published_at),
+            raw=row,
+        )
+
+
 ATS_SOURCES = {
     "greenhouse": GreenhouseSource,
     "lever": LeverSource,
     "ashby": AshbySource,
     "smartrecruiters": SmartRecruitersSource,
+    "workable": WorkableSource,
+    "recruitee": RecruiteeSource,
 }

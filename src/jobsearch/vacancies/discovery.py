@@ -33,7 +33,9 @@ from .sources.base import SourceError
 # an explicit allowlist rather than iterating ATS_SOURCES.keys(), so a future
 # platform with a differently-shaped constructor can be registered there
 # without silently breaking (or being silently included in) probing here.
-PROBEABLE_ATS: set[str] = {"greenhouse", "lever", "ashby", "smartrecruiters"}
+PROBEABLE_ATS: set[str] = {
+    "greenhouse", "lever", "ashby", "smartrecruiters", "workable", "recruitee",
+}
 
 _LEGAL_SUFFIXES = {
     "gmbh", "ag", "inc", "llc", "ltd", "corp", "co", "se", "sa", "bv", "group", "plc",

@@ -14,7 +14,9 @@ from jobsearch.vacancies.sources.ats import (
     AshbySource,
     GreenhouseSource,
     LeverSource,
+    RecruiteeSource,
     SmartRecruitersSource,
+    WorkableSource,
 )
 from jobsearch.vacancies.sources.base import SourceError
 from jobsearch.vacancies.sources.himalayas import HimalayasSource
@@ -79,6 +81,49 @@ async def test_smartrecruiters_fetches_description_via_a_second_detail_call():
     assert v.is_remote is True
     assert v.location_country == "PL"
     assert "<" not in v.description and len(v.description) > 100
+
+
+async def test_workable_reads_shortcode_and_nested_country_code():
+    fx = fixture("workable")
+    vacancies = await WorkableSource("huggingface").fetch(FakeClient(fx))
+    assert vacancies
+    v = vacancies[0]
+    assert v.source == "workable"
+    # There's no numeric "id" on this endpoint -- "shortcode" is the identifier.
+    assert v.source_id == fx["jobs"][0]["shortcode"]
+    # The account-wide "name" is used, not the "huggingface" slug.
+    assert v.company == "Hugging Face"
+    # The nested locations[0] entry already carries an ISO countryCode.
+    assert v.location_country == "FR"
+    assert v.location_city == "Paris"
+    assert v.is_remote is True
+    assert "<" not in v.description[:200]
+    assert v.url.startswith("https://apply.workable.com/")
+
+
+async def test_recruitee_description_needs_no_second_call():
+    client = FakeClient(fixture("recruitee"))
+    vacancies = await RecruiteeSource("bunq").fetch(client)
+    assert len(client.requests) == 1  # unlike SmartRecruiters, one call is enough
+    assert len(vacancies) == 2
+    v = vacancies[0]
+    assert v.source == "recruitee" and v.company == "bunq"
+    assert "<" not in v.description and len(v.description) > 100
+    assert v.location_country == "NL"
+    assert v.is_remote is False   # on_site=True, remote=False
+    # The second posting is hybrid=True but still remote=False -- is_remote
+    # tracks only the dedicated "remote" flag, not "hybrid" too.
+    assert vacancies[1].is_remote is False
+
+
+async def test_recruitee_published_at_survives_the_non_iso_timestamp():
+    # published_at arrives as "2026-09-07 12:05:26 UTC" -- a space instead of
+    # "T" and a trailing zone name normalize_timestamp's fromisoformat can't
+    # parse on its own; RecruiteeSource must convert it first.
+    fx = fixture("recruitee")
+    assert fx["offers"][0]["published_at"].endswith(" UTC")
+    vacancies = await RecruiteeSource("bunq").fetch(FakeClient(fx))
+    assert vacancies[0].posted_at is not None
 
 
 def test_build_sources_wires_smartrecruiters_from_companies_yaml(tmp_path):
