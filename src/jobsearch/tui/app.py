@@ -44,9 +44,13 @@ class JobsearchApp(App):
         Binding("s", "mark_status('seen')", "Seen"),
         Binding("d", "mark_status('dismissed')", "Dismissed"),
         Binding("a", "mark_status('applied')", "Applied"),
+        Binding("i", "mark_status('interview')", "Interview"),
+        Binding("o", "mark_status('accepted')", "Accepted"),
+        Binding("x", "mark_status('rejected')", "Rejected"),
         Binding("m", "mark_duplicate", "Duplicate"),
         Binding("u", "unmark_duplicate", "Unmark", show=False),
         Binding("e", "edit_description", "Edit desc"),
+        Binding("n", "edit_reason", "Reason"),
         Binding("c", "cycle_view", "Cycle view"),
         Binding("r", "refresh", "Refresh"),
         Binding("q", "quit", "Quit"),
@@ -258,6 +262,31 @@ class JobsearchApp(App):
                 "description": new_text
             }
         self._rerate(vacancy_id)
+
+    def action_edit_reason(self) -> None:
+        if self.view == "duplicates" or self._selected_id is None:
+            return
+        self.edit_reason_for_id(self._selected_id)
+
+    def edit_reason_for_id(self, vacancy_id: str) -> None:
+        # Read from the store, not the row cache -- the cache may hold a raw
+        # sqlite3.Row (no .get()) or a plain dict depending on whether it's
+        # been through a prior in-place update, and the store is the
+        # authoritative current value either way.
+        current_row = self.store.conn.execute(
+            "SELECT reason FROM vacancy_status WHERE vacancy_id = ?", (vacancy_id,)
+        ).fetchone()
+        current = (current_row["reason"] if current_row else None) or ""
+        new_text = self._prompt_editor(current)
+        if new_text is None or new_text == current:
+            return
+        try:
+            self.store.set_reason(vacancy_id, new_text)
+        except ValueError as exc:
+            self.notify(str(exc), severity="error")
+            return
+        if vacancy_id in self._row_cache:
+            self._row_cache[vacancy_id] = dict(self._row_cache[vacancy_id]) | {"reason": new_text}
 
     def _prompt_editor(self, current: str) -> str:
         """Isolated from edit_description_for_id so tests can monkeypatch

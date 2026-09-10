@@ -205,6 +205,93 @@ def test_close_missing_vacancies_scoped_to_source_and_company(store):
     assert store.ranked("h", 0, 10, only_status="closed")[0]["title"] == "Acme Role"
 
 
+def test_interview_accepted_and_rejected_are_valid_statuses(store):
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    store.save_rating(v.id, "h", "f", score=80)
+    for status in ("interview", "accepted", "rejected"):
+        store.set_status(v.id, status)
+        assert store.ranked("h", 0, 10)[0]["status"] == status
+
+
+@pytest.mark.parametrize("status", ["interview", "accepted", "rejected"])
+def test_close_missing_vacancies_never_overwrites_a_decided_outcome(store, status):
+    """Same guarantee as applied/closed -- an interview, acceptance or
+    rejection is worth keeping even after the posting disappears."""
+    v = make_vacancy(source_id="1")
+    store.upsert_vacancies([v])
+    store.set_status(v.id, status)
+
+    closed = store.close_missing_vacancies("test", "Acme", present_source_ids=set())
+
+    assert closed == 0
+    store.save_rating(v.id, "h", "f", score=80)
+    assert store.ranked("h", 0, 10, only_status=status)[0]["id"] == v.id
+
+
+def test_set_reason_is_readable_back_via_ranked(store):
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    store.save_rating(v.id, "h", "f", score=80)
+    store.set_status(v.id, "rejected")
+
+    store.set_reason(v.id, "salary below range")
+
+    assert store.ranked("h", 0, 10)[0]["reason"] == "salary below range"
+
+
+def test_set_reason_without_a_status_yet_raises(store):
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    with pytest.raises(ValueError, match="status"):
+        store.set_reason(v.id, "too early")
+
+
+def test_set_status_does_not_clear_an_existing_reason(store):
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    store.save_rating(v.id, "h", "f", score=80)
+    store.set_status(v.id, "rejected")
+    store.set_reason(v.id, "no response after the interview")
+
+    store.set_status(v.id, "dismissed")
+
+    row = store.ranked("h", 0, 10, only_status="dismissed")[0]
+    assert row["reason"] == "no response after the interview"
+
+
+def test_opening_a_pre_reason_column_database_migrates_it_in_place(tmp_path):
+    """A real jobsearch.db predates the `reason` column -- Store must add it
+    without touching existing rows (no migration system in this repo, just
+    an idempotent ALTER TABLE on open)."""
+    import sqlite3
+
+    from jobsearch.vacancies.store import Store
+
+    db_path = tmp_path / "old.db"
+    raw = sqlite3.connect(db_path)
+    raw.execute(
+        """CREATE TABLE vacancy_status (
+            vacancy_id TEXT PRIMARY KEY, status TEXT NOT NULL, updated_at TEXT NOT NULL
+        )"""
+    )
+    raw.execute(
+        "INSERT INTO vacancy_status (vacancy_id, status, updated_at) VALUES (?,?,?)",
+        ("old-vacancy", "applied", "2020-01-01T00:00:00+00:00"),
+    )
+    raw.commit()
+    raw.close()
+
+    with Store(db_path) as store:
+        columns = {row["name"] for row in store.conn.execute("PRAGMA table_info(vacancy_status)")}
+        assert "reason" in columns
+        row = store.conn.execute(
+            "SELECT status FROM vacancy_status WHERE vacancy_id = ?", ("old-vacancy",)
+        ).fetchone()
+        assert row["status"] == "applied"  # pre-existing data untouched
+        store.set_reason("old-vacancy", "now settable after migration")
+
+
 def test_ranked_respects_threshold_and_order(store):
     lo, hi = make_vacancy(title="Low", description="a"), make_vacancy(title="High", description="b")
     store.upsert_vacancies([lo, hi])
@@ -317,6 +404,17 @@ def test_ranked_page_only_status_shows_just_that_bucket(store, profile):
 
     assert store.ranked_page(h, 0) == []
     assert [r["id"] for r in store.ranked_page(h, 0, only_status="dismissed")] == [v.id]
+
+
+def test_ranked_page_includes_reason(store, profile):
+    h = profile.hash()
+    v = make_vacancy()
+    store.upsert_vacancies([v])
+    store.save_rating(v.id, h, "f", score=90)
+    store.set_status(v.id, "rejected")
+    store.set_reason(v.id, "not enough Kubernetes experience")
+
+    assert store.ranked_page(h, 0)[0]["reason"] == "not enough Kubernetes experience"
 
 
 def test_ranked_page_sorts_by_requested_column(store, profile):

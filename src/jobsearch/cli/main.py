@@ -283,7 +283,7 @@ def show(
         for row in rows:
             colour = "green" if row["score"] >= 80 else "yellow" if row["score"] >= 60 else "white"
             status = row["status"]
-            status_text = f"[cyan]{status}[/]" if status == "applied" else f"[dim]{status}[/]"
+            status_text = f"[{_STATUS_COLOUR.get(status, 'dim')}]{status}[/]"
             table.add_row(
                 f"[{colour}]{row['score']}[/]", row["verdict"], status_text, row["title"],
                 row["company"], row["location_raw"] or "-", row["id"], row["url"],
@@ -294,17 +294,25 @@ def show(
         console.print(f"[yellow]{failed} vacancy(s) could not be rated[/] [dim](model output failed validation)[/]")
 
 
+_STATUS_COLOUR = {
+    "applied": "cyan", "interview": "cyan", "accepted": "green", "rejected": "red",
+}
+
+
 def _panel(row) -> None:
     matched = json.loads(row["matched_skills"] or "[]")
     missing = json.loads(row["missing_skills"] or "[]")
     blockers = json.loads(row["hard_blockers"] or "[]")
     penalty_notes = json.loads(row["evidence"] or "{}").get("penalty_notes") or []
     status = row["status"]
-    status_text = f"[cyan]status: {status}[/]" if status == "applied" else f"[dim]status: {status}[/]"
+    status_text = f"[{_STATUS_COLOUR.get(status, 'dim')}]status: {status}[/]"
     body = [
         f"[bold]{row['company']}[/] · {row['location_raw'] or 'location unspecified'}",
-        row["url"], status_text, "",
+        row["url"], status_text,
     ]
+    if row["reason"]:
+        body.append(f"[dim]reason: {rich_escape(row['reason'])}[/]")
+    body.append("")
     if matched:
         body.append("[green]fits:[/]")
         for m in matched[:6]:
@@ -328,8 +336,15 @@ def _panel(row) -> None:
 
 
 @app.command()
-def mark(vacancy_id: str, status: str = typer.Argument(..., help="seen|dismissed|applied")):
-    """Record that you have seen, dismissed, or applied to a vacancy."""
+def mark(
+    vacancy_id: str,
+    status: str = typer.Argument(
+        ..., help="seen|dismissed|applied|interview|accepted|rejected|closed"
+    ),
+):
+    """Record a vacancy's status, including an application outcome
+    (interview/accepted/rejected). Use the TUI to attach a free-text
+    reason alongside the status."""
     with _store() as store:
         try:
             store.set_status(vacancy_id, status)

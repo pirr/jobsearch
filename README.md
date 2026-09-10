@@ -67,6 +67,8 @@ jobsearch match                     # filter, shortlist, rate
 jobsearch show                      # ranked results
 jobsearch show --full               # with evidence for each match
 jobsearch mark <vacancy-id> dismissed
+jobsearch mark <vacancy-id> rejected          # also: seen|applied|interview|accepted|closed
+                                     #   (attach a free-text reason from the TUI's `n` key)
 jobsearch tui                       # interactive terminal UI: scrollable list,
                                      #   no display limit, filter/sort/status/
                                      #   duplicate/description actions in place
@@ -87,11 +89,16 @@ automatically) instead of re-running `show --limit N`. Inside it:
 - `Enter` opens a vacancy's full detail (matched/missing skills, evidence,
   blockers) -- the URL there is a clickable terminal hyperlink
 - `s` / `d` / `a` mark seen / dismissed / applied in place
+- `i` / `o` / `x` mark interview / accepted / rejected -- the application
+  outcome, once there is one
 - `c` cycles the view: active -> dismissed -> closed -> duplicates
 - `m` opens the duplicate picker (search any vacancy, confirm, hide); `u` in
   the duplicates view undoes a mark
 - `e` opens $EDITOR on the description (same flow as `update-description`),
   then re-rates in the background without blocking the UI
+- `n` opens $EDITOR on a free-text reason/note for the vacancy (e.g. why it
+  was rejected) -- mark a status first, there's nowhere to attach it to yet
+  otherwise
 - `r` refreshes, `q`/`Esc` goes back/quits
 
 Under Docker: `docker compose run --rm jobsearch tui` -- no compose file

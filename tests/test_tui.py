@@ -401,6 +401,61 @@ async def test_escape_closes_detail_screen_without_reloading_the_list(store, pro
         assert app.query_one("#table", DataTable).row_count == 2
 
 
+async def test_interview_accepted_rejected_bindings_set_status(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+
+    ids = seed_active(store, profile, n=1)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        for key, status in (("i", "interview"), ("o", "accepted"), ("x", "rejected")):
+            await pilot.press(key)
+            await pilot.pause()
+            assert app._row_cache[ids[0]]["status"] == status
+            row = store.conn.execute(
+                "SELECT status FROM vacancy_status WHERE vacancy_id=?", (ids[0],)
+            ).fetchone()
+            assert row["status"] == status
+
+
+async def test_edit_reason_saves_via_prompt_editor(store, profile, monkeypatch):
+    from jobsearch.tui.app import JobsearchApp
+
+    ids = seed_active(store, profile, n=1)
+    store.set_status(ids[0], "rejected")
+    monkeypatch.setattr(JobsearchApp, "_prompt_editor", lambda self, current: "salary too low")
+
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app._selected_id = ids[0]
+        await pilot.press("n")
+        await pilot.pause()
+
+        row = store.conn.execute(
+            "SELECT reason FROM vacancy_status WHERE vacancy_id=?", (ids[0],)
+        ).fetchone()
+        assert row["reason"] == "salary too low"
+
+
+async def test_edit_reason_notifies_on_error_when_no_status_set_yet(store, profile, monkeypatch):
+    from jobsearch.tui.app import JobsearchApp
+
+    ids = seed_active(store, profile, n=1)
+    monkeypatch.setattr(JobsearchApp, "_prompt_editor", lambda self, current: "too early")
+
+    notifications = []
+    app = JobsearchApp(store=store, candidate=profile)
+    app.notify = lambda message, **kw: notifications.append((message, kw.get("severity")))
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app._selected_id = ids[0]
+        await pilot.press("n")
+        await pilot.pause()
+
+        assert notifications and notifications[0][1] == "error"
+
+
 async def test_status_action_works_from_detail_screen(store, profile):
     from jobsearch.tui.app import JobsearchApp
 
@@ -417,6 +472,23 @@ async def test_status_action_works_from_detail_screen(store, profile):
             "SELECT status FROM vacancy_status WHERE vacancy_id=?", (ids[0],)
         ).fetchone()
         assert row["status"] == "dismissed"
+
+
+async def test_interview_binding_works_from_detail_screen(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+
+    ids = seed_active(store, profile, n=1)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+        await pilot.press("o")
+        await pilot.pause()
+        row = store.conn.execute(
+            "SELECT status FROM vacancy_status WHERE vacancy_id=?", (ids[0],)
+        ).fetchone()
+        assert row["status"] == "accepted"
 
 
 async def test_m_opens_duplicate_picker_modal(store, profile):

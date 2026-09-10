@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS ratings (
 CREATE TABLE IF NOT EXISTS vacancy_status (
     vacancy_id TEXT PRIMARY KEY,
     status     TEXT NOT NULL,
+    reason     TEXT,
     updated_at TEXT NOT NULL,
     FOREIGN KEY (vacancy_id) REFERENCES vacancies(id) ON DELETE CASCADE
 );
@@ -92,7 +93,13 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE INDEX IF NOT EXISTS idx_profiles_hash ON profiles(profile_hash);
 """
 
-VALID_STATUSES = ("seen", "dismissed", "applied", "closed")
+VALID_STATUSES = (
+    "seen", "dismissed", "applied", "interview", "accepted", "rejected", "closed",
+)
+# Pipeline states past "applied" that represent a candidate's own decided
+# outcome -- close_missing_vacancies() must never silently overwrite these
+# just because a posting later disappears from the source feed.
+_DECIDED_STATUSES = ("applied", "interview", "accepted", "rejected", "closed")
 
 _SORT_COLUMNS = {
     "score": "r.score",
@@ -132,7 +139,18 @@ class Store:
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.execute("PRAGMA journal_mode = WAL")
         self.conn.executescript(SCHEMA)
+        self._migrate_add_reason_column()
         self.conn.commit()
+
+    def _migrate_add_reason_column(self) -> None:
+        """Additive schema fix-up for databases created before `reason`
+        existed -- there's no migration system here, and `CREATE TABLE IF
+        NOT EXISTS` above is a no-op on a table that already exists, so an
+        old vacancy_status table needs this once. Never touches existing
+        rows/columns."""
+        columns = {row["name"] for row in self.conn.execute("PRAGMA table_info(vacancy_status)")}
+        if "reason" not in columns:
+            self.conn.execute("ALTER TABLE vacancy_status ADD COLUMN reason TEXT")
 
     def close(self) -> None:
         self.conn.close()
@@ -236,19 +254,20 @@ class Store:
 
         Scoped to one (source, company) at a time -- the caller (ingest) is
         the one that just fetched that company's current live listing and
-        knows exactly which ids it contains. Skips anything already `applied`
-        or `closed`: applying is a fact worth keeping even after a role
-        closes, not something a later disappearance should silently erase.
+        knows exactly which ids it contains. Skips anything already a
+        decided outcome (applied, interview, accepted, rejected, closed):
+        that is a fact worth keeping even after a role closes, not something
+        a later disappearance should silently erase.
         Returns how many were newly marked.
         """
         rows = self.conn.execute(
-            """
+            f"""
             SELECT v.id, v.source_id FROM vacancies v
             LEFT JOIN vacancy_status s ON s.vacancy_id = v.id
             WHERE v.source = ? AND v.company = ?
-              AND COALESCE(s.status, 'new') NOT IN ('applied', 'closed')
+              AND COALESCE(s.status, 'new') NOT IN ({",".join("?" * len(_DECIDED_STATUSES))})
             """,
-            (source, company),
+            (source, company, *_DECIDED_STATUSES),
         )
         gone = [r["id"] for r in rows if r["source_id"] not in present_source_ids]
         for vacancy_id in gone:
@@ -328,7 +347,8 @@ class Store:
             self.conn.execute(
                 f"""
                 SELECT v.*, r.score, r.verdict, r.matched_skills, r.missing_skills,
-                       r.hard_blockers, r.model, r.evidence, COALESCE(s.status,'new') AS status
+                       r.hard_blockers, r.model, r.evidence, COALESCE(s.status,'new') AS status,
+                       s.reason AS reason
                 FROM ratings r
                 JOIN vacancies v ON v.id = r.vacancy_id
                 LEFT JOIN vacancy_status s ON s.vacancy_id = v.id
@@ -418,6 +438,7 @@ class Store:
             SELECT v.*, r.score, r.verdict, r.matched_skills, r.missing_skills,
                    r.hard_blockers, r.model, r.evidence,
                    COALESCE(s.status,'new') AS status,
+                   s.reason AS reason,
                    {sort_expr} AS _sort_key
             FROM ratings r
             JOIN vacancies v ON v.id = r.vacancy_id
@@ -446,6 +467,18 @@ class Store:
                    status=excluded.status, updated_at=excluded.updated_at""",
             (vacancy_id, status, _now()),
         )
+        self.conn.commit()
+
+    def set_reason(self, vacancy_id: str, reason: str) -> None:
+        """Attach a free-text note to a vacancy's current status (e.g. why a
+        rejection happened). Always tied to an existing status row -- there
+        is no separate history, and a bare "new" vacancy has none yet."""
+        cur = self.conn.execute(
+            "UPDATE vacancy_status SET reason = ?, updated_at = ? WHERE vacancy_id = ?",
+            (reason, _now(), vacancy_id),
+        )
+        if cur.rowcount == 0:
+            raise ValueError(f"{vacancy_id} has no status yet -- mark one before adding a reason")
         self.conn.commit()
 
     # ---- duplicates ------------------------------------------------------

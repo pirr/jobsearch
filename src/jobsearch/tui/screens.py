@@ -40,8 +40,12 @@ class DetailScreen(Screen):
         ("s", "mark_status('seen')", "Seen"),
         ("d", "mark_status('dismissed')", "Dismissed"),
         ("a", "mark_status('applied')", "Applied"),
+        ("i", "mark_status('interview')", "Interview"),
+        ("o", "mark_status('accepted')", "Accepted"),
+        ("x", "mark_status('rejected')", "Rejected"),
         ("m", "mark_duplicate", "Duplicate"),
         ("e", "edit_description", "Edit desc"),
+        ("n", "edit_reason", "Reason"),
     ]
 
     def __init__(self, row) -> None:
@@ -64,8 +68,10 @@ class DetailScreen(Screen):
             f"[bold]{row['company']}[/] · {row['location_raw'] or 'location unspecified'}",
             f'[link="{row["url"]}"]{row["url"]}[/link]',
             f"status: {row['status']}",
-            "",
         ]
+        if row["reason"]:
+            lines.append(f"reason: {row['reason']}")
+        lines.append("")
         if matched:
             lines.append("[green]fits:[/]")
             for m in matched[:6]:
@@ -96,3 +102,7 @@ class DetailScreen(Screen):
     def action_edit_description(self) -> None:
         self.app.pop_screen()
         self.app.edit_description_for_id(self.row["id"])
+
+    def action_edit_reason(self) -> None:
+        self.app.pop_screen()
+        self.app.edit_reason_for_id(self.row["id"])
