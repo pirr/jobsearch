@@ -94,6 +94,27 @@ greenhouse:
   # discovered via `jobsearch discover-ats` 2026-09-08
   - vercel
 
+  # imported from career-ops-hq/career-ops (templates/portals.example.yml), verified live 2026-09-11
+  - anthropic
+  - polyai
+  - intercom
+  - humeai
+  - arizeai
+  - coreweave
+  - gleanwork
+  - boomilp
+  - later
+  - safariai
+  - hootsuite
+  - contentful             # was dead when first probed (see file header); live again
+  - traderepublicbank      # separate live Greenhouse board from the existing traderepublic slug below
+  - wayve
+  - isomorphiclabs
+  - physicsx
+  - stabilityai
+  - amplemarket
+  - hightouch
+  - planetscale
 lever:
   - finn
   # verified live 2026-09-05
@@ -111,6 +132,10 @@ lever:
   - protolabs              # 3D Hubs, acquired by Protolabs; Amsterdam
   - spreedly
 
+  # imported from career-ops-hq/career-ops (templates/portals.example.yml), verified live 2026-09-11
+  - qonto
+  - pigment
+  - spotify
 ashby:
   - enpal
   - doctolib
@@ -164,6 +189,37 @@ ashby:
 
   # discovered via `jobsearch discover-ats` 2026-09-10
   - statista
+  # imported from career-ops-hq/career-ops (templates/portals.example.yml), verified live 2026-09-11
+  - elevenlabs
+  - deepgram
+  - vapi
+  - bland
+  - sierra
+  - decagon
+  - zapier
+  - cohere
+  - langchain
+  - pinecone
+  - klue
+  - glacis-ai
+  - attio
+  - perk
+  - cradlebio
+  - photoroom
+  - synthesia
+  - faculty
+  - causaly
+  - lovable
+  - legora
+  - mollie
+  - corti
+  - perplexity
+  - claylabs
+  - workos
+  - supabase
+  - resend
+  - clerk
+  - inngest
 # SmartRecruiters -- unlike the other three platforms, the list endpoint never
 # inlines a description (a per-posting detail call is needed; see
 # sources/ats.py). Verified live 2026-09-08.
@@ -176,3 +232,10 @@ smartrecruiters:
   - primark                 # Dublin/UK retail
   - equinox                 # US
   - smartrecruiters         # the vendor's own careers page
+
+workable:
+  # discovered via `jobsearch discover-ats` 2026-09-11
+  - action1
+  # imported from career-ops-hq/career-ops (templates/portals.example.yml), verified live 2026-09-11
+  - semios
+  - huggingface
