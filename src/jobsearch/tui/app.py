@@ -10,8 +10,9 @@ from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal
-from textual.widgets import Button, DataTable, Footer, Header, Input, Select, Static, Switch
+from textual.widgets import Button, DataTable, Footer, Header, Input, Select, Static, Switch, Label
 
+from .profile_modal import ProfilePickerModal
 from ..candidate.profile import CandidateProfile
 from ..config import load_config
 from ..editing import open_in_editor
@@ -40,10 +41,10 @@ class JobsearchApp(App):
     """Browse, filter and act on rated vacancies without a display limit."""
 
     CSS = """
-    #filterbar { height: 3; }
-    #filterbar Input { width: 1fr; }
-    #filterbar Select { width: 22; }
-    #filterbar Static { width: auto; }
+    #topbar { height: 3; }
+    #topbar Input { width: 1fr; }
+    #topbar Select { width: 22; }
+    #topbar Static { width: auto; }
     """
     TITLE = "jobsearch"
 
@@ -87,12 +88,13 @@ class JobsearchApp(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        with Horizontal(id="filterbar"):
+        with Horizontal(id="topbar"):
             yield Input(placeholder="press / to search title/company/location", id="search")
             yield Select(_SORT_OPTIONS, value="score", id="sort", allow_blank=False)
             yield Button("↓ desc", id="sort-dir")
             yield Switch(id="remote-only")
             yield Static("remote only", id="remote-only-label")
+            yield Button(id="profiles-btn", action="app.profiles_select")
         yield DataTable(id="table", cursor_type="row")
         yield Footer()
 
@@ -119,6 +121,8 @@ class JobsearchApp(App):
         # needing a mouse click first) even though this same heuristic
         # focuses it fine under the headless test driver.
         self.query_one("#table", DataTable).focus()
+        if self.candidate and self.candidate.source_files:
+            self.query_one("#profiles-btn", Button).label = self.candidate.source_files[0]
 
     def _setup_columns_for_view(self) -> None:
         table = self.query_one("#table", DataTable)
@@ -264,6 +268,22 @@ class JobsearchApp(App):
         if self.view == "duplicates" or self._selected_id is None:
             return
         self.edit_description_for_id(self._selected_id)
+
+    def action_profiles_select(self) -> None:
+        def handle_result(profile_id: str | None) -> None:
+            if profile_id is None:
+                return
+
+            config = load_config()
+            archived_path = config.profile_storage_path / profile_id / "profile.json"
+            self.candidate = CandidateProfile.load(archived_path)
+            self.candidate.save(config.profile_path)
+            self.load_first_page()
+            self.query_one("#table", DataTable).focus()
+            if self.candidate and self.candidate.source_files:
+                self.query_one("#profiles-btn", Button).label = self.candidate.source_files[0]
+
+        self.push_screen(ProfilePickerModal(self.store), handle_result)
 
     def edit_description_for_id(self, vacancy_id: str) -> None:
         current = self.store.get_vacancy(vacancy_id)["description"] or ""

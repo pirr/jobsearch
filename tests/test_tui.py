@@ -88,7 +88,7 @@ async def test_search_input_gets_a_usable_width_not_just_its_border(store, profi
     async with app.run_test(size=(100, 24)) as pilot:
         await pilot.pause()
         search = app.query_one("#search", Input)
-        assert search.region.width >= 30
+        assert search.region.width >= 20
 
 
 async def test_no_profile_screen_shown_when_profile_path_missing(tmp_path, store):
