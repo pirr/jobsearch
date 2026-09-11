@@ -23,7 +23,7 @@ from ..vacancies.store import Store
 from .duplicate_modal import DuplicatePickerModal
 from .screens import DetailScreen, NoProfileScreen
 
-_VIEWS = ["active", "dismissed", "closed", "duplicates"]
+_VIEWS = ["active", "interview", "applied", "dismissed", "closed", "duplicates"]
 _SORT_OPTIONS = [
     ("Score", "score"), ("Date posted", "posted_at"),
     ("Company", "company"), ("Title", "title"),
