@@ -6,10 +6,12 @@ data-access path, no business logic duplicated into the UI layer.
 
 from __future__ import annotations
 
+import datetime
+
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal
+from textual.containers import Horizontal, Vertical, Middle, Center
 from textual.widgets import Button, DataTable, Footer, Header, Input, Select, Static, Switch, Label
 
 from .profile_modal import ProfilePickerModal
@@ -45,6 +47,8 @@ class JobsearchApp(App):
     #topbar Input { width: 1fr; }
     #topbar Select { width: 22; }
     #topbar Static { width: auto; }
+    #remote-only-group { width: auto; }
+    #remote-only { border: none; }
     """
     TITLE = "jobsearch"
 
@@ -92,9 +96,14 @@ class JobsearchApp(App):
             yield Input(placeholder="press / to search title/company/location", id="search")
             yield Select(_SORT_OPTIONS, value="score", id="sort", allow_blank=False)
             yield Button("↓ desc", id="sort-dir")
-            yield Switch(id="remote-only")
-            yield Static("remote only", id="remote-only-label")
+
+            with Vertical(id="remote-only-group"):
+                yield Static("remote only", id="remote-only-label")
+                yield Switch(id="remote-only")
+
             yield Button(id="profiles-btn", action="app.profiles_select")
+            yield Label(id="rating-lbl")
+
         yield DataTable(id="table", cursor_type="row")
         yield Footer()
 
@@ -123,6 +132,7 @@ class JobsearchApp(App):
         self.query_one("#table", DataTable).focus()
         if self.candidate and self.candidate.source_files:
             self.query_one("#profiles-btn", Button).label = self.candidate.source_files[0]
+            self.query_one("#rating-lbl", Label).update(self._get_last_rated_at())
 
     def _setup_columns_for_view(self) -> None:
         table = self.query_one("#table", DataTable)
@@ -282,6 +292,7 @@ class JobsearchApp(App):
             self.query_one("#table", DataTable).focus()
             if self.candidate and self.candidate.source_files:
                 self.query_one("#profiles-btn", Button).label = self.candidate.source_files[0]
+                self.query_one("#rating-lbl", Label).update(self._get_last_rated_at())
 
         self.push_screen(ProfilePickerModal(self.store), handle_result)
 
@@ -388,3 +399,13 @@ class JobsearchApp(App):
             return
         self.query_one("#search", Input).clear()
         self.query_one("#table", DataTable).focus()
+
+    def _get_last_rated_at(self) -> str:
+        lr_at = self.store.get_profile_last_rated_at(self.candidate.hash())
+        if lr_at is None:
+            return "Not rated yet"
+        lr_at = datetime.datetime.fromisoformat(lr_at["last_rated_at"])
+        if lr_at.date() == datetime.date.today():
+            return f"Rated today at {lr_at.time().strftime('%H:%M')}"
+
+        return f"Rated at {lr_at.date().strftime('%Y-%m-%d %H:%M')} "

@@ -631,7 +631,7 @@ class Store:
         return list(
             self.conn.execute(
                 """
-                SELECT p.*, COUNT(r.vacancy_id) AS rated_count
+                SELECT p.*, COUNT(r.vacancy_id) AS rated_count, MAX(r.rated_at) AS last_rated_at
                 FROM profiles p
                 LEFT JOIN ratings r
                     ON r.profile_hash = p.profile_hash AND r.failed = 0
@@ -640,3 +640,9 @@ class Store:
                 """
             )
         )
+
+    def get_profile_last_rated_at(self, profile_hash: str) -> sqlite3.Row | None:
+        return self.conn.execute(
+            "SELECT MAX(rated_at) last_rated_at FROM ratings WHERE profile_hash = ?",
+            (profile_hash,),
+        ).fetchone()

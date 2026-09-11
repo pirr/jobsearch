@@ -457,14 +457,14 @@ def profiles():
         raise typer.Exit(0)
 
     table = Table()
-    for col in ("", "id", "created", "profile hash", "source files", "rated"):
+    for col in ("", "id", "created", "profile hash", "source files", "rated", "last rated at"):
         table.add_column(col)
     for r in rows:
         mark_active = "[green]*[/]" if r["profile_hash"] == active_hash else ""
         sources = ", ".join(json.loads(r["source_files"] or "[]"))
         table.add_row(
             mark_active, r["id"], (r["created_at"] or "")[:19],
-            r["profile_hash"], sources, str(r["rated_count"]),
+            r["profile_hash"], sources, str(r["rated_count"]), str(r["last_rated_at"] or ""),
         )
     console.print(table)
     console.print("[dim]`jobsearch use-profile <id>` to reactivate one.[/]")
