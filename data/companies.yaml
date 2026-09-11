@@ -162,6 +162,8 @@ ashby:
   - Uberall                # Berlin, DACH; slug is case-sensitive
   - wealthsimple           # Toronto
 
+  # discovered via `jobsearch discover-ats` 2026-09-10
+  - statista
 # SmartRecruiters -- unlike the other three platforms, the list endpoint never
 # inlines a description (a per-posting detail call is needed; see
 # sources/ats.py). Verified live 2026-09-08.
