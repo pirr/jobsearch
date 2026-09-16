@@ -124,15 +124,7 @@ class JobsearchApp(App):
             await self.push_screen(NoProfileScreen(
                 "no rated vacancies for this profile -- run `jobsearch match` first"))
             return
-        self.load_first_page()
-        # Explicit, not left to Textual's AUTO_FOCUS heuristic -- reported in
-        # the wild as an unfocused table (blurred/gray cursor row, hotkeys
-        # needing a mouse click first) even though this same heuristic
-        # focuses it fine under the headless test driver.
-        self.query_one("#table", DataTable).focus()
-        if self.candidate and self.candidate.source_files:
-            self.query_one("#profiles-btn", Button).label = self.candidate.source_files[0]
-            self.query_one("#rating-lbl", Label).update(self._get_last_rated_at())
+        self.refresh_main_page()
 
     def _setup_columns_for_view(self) -> None:
         table = self.query_one("#table", DataTable)
@@ -288,11 +280,7 @@ class JobsearchApp(App):
             archived_path = config.profile_storage_path / profile_id / "profile.json"
             self.candidate = CandidateProfile.load(archived_path)
             self.candidate.save(config.profile_path)
-            self.load_first_page()
-            self.query_one("#table", DataTable).focus()
-            if self.candidate and self.candidate.source_files:
-                self.query_one("#profiles-btn", Button).label = self.candidate.source_files[0]
-                self.query_one("#rating-lbl", Label).update(self._get_last_rated_at())
+            self.refresh_main_page()
 
         self.push_screen(ProfilePickerModal(self.store), handle_result)
 
@@ -409,3 +397,15 @@ class JobsearchApp(App):
             return f"Rated today at {lr_at.time().strftime('%H:%M')}"
 
         return f"Rated at {lr_at.date().strftime('%Y-%m-%d %H:%M')} "
+
+    def refresh_main_page(self):
+        self.load_first_page()
+        # Explicit, not left to Textual's AUTO_FOCUS heuristic -- reported in
+        # the wild as an unfocused table (blurred/gray cursor row, hotkeys
+        # needing a mouse click first) even though this same heuristic
+        # focuses it fine under the headless test driver.
+        self.query_one("#table", DataTable).focus()
+        if self.candidate and self.candidate.source_files:
+            self.query_one("#profiles-btn", Button).label = self.candidate.source_files[0]
+            self.query_one("#rating-lbl", Label).update(self._get_last_rated_at())
+
