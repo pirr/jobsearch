@@ -319,26 +319,18 @@ async def test_remote_only_switch_filters_and_resets_pagination(store, profile):
         assert app._loaded_ids == {remote.id}
 
 
-async def test_cycle_view_moves_through_active_dismissed_closed_duplicates(store, profile):
-    from jobsearch.tui.app import JobsearchApp
+async def test_cycle_view_moves_through_all_views_and_back(store, profile):
+    from jobsearch.tui.app import JobsearchApp, _VIEWS
 
     app = JobsearchApp(store=store, candidate=profile)
     seed_active(store, profile, n=1)
     async with app.run_test() as pilot:
         await pilot.pause()
-        assert app.view == "active"
-        await pilot.press("c")
-        await pilot.pause()
-        assert app.view == "dismissed"
-        await pilot.press("c")
-        await pilot.pause()
-        assert app.view == "closed"
-        await pilot.press("c")
-        await pilot.pause()
-        assert app.view == "duplicates"
-        await pilot.press("c")
-        await pilot.pause()
-        assert app.view == "active"
+        assert app.view == _VIEWS[0]
+        for expected in _VIEWS[1:] + [_VIEWS[0]]:
+            await pilot.press("c")
+            await pilot.pause()
+            assert app.view == expected
 
 
 async def test_refresh_reloads_the_current_view_with_a_fresh_cursor(store, profile):
