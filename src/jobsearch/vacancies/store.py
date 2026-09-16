@@ -471,14 +471,16 @@ class Store:
 
     def set_reason(self, vacancy_id: str, reason: str) -> None:
         """Attach a free-text note to a vacancy's current status (e.g. why a
-        rejection happened). Always tied to an existing status row -- there
-        is no separate history, and a bare "new" vacancy has none yet."""
-        cur = self.conn.execute(
-            "UPDATE vacancy_status SET reason = ?, updated_at = ? WHERE vacancy_id = ?",
-            (reason, _now(), vacancy_id),
+        rejection happened). A bare "new" vacancy has no status row yet --
+        adding a note implicitly marks it 'seen' rather than discarding the
+        note, since typing it out is itself a real interaction worth keeping."""
+        self.conn.execute(
+            """INSERT INTO vacancy_status (vacancy_id, status, reason, updated_at)
+                   VALUES (?, 'seen', ?, ?)
+               ON CONFLICT(vacancy_id) DO UPDATE SET
+                   reason=excluded.reason, updated_at=excluded.updated_at""",
+            (vacancy_id, reason, _now()),
         )
-        if cur.rowcount == 0:
-            raise ValueError(f"{vacancy_id} has no status yet -- mark one before adding a reason")
         self.conn.commit()
 
     # ---- duplicates ------------------------------------------------------

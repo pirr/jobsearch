@@ -240,11 +240,17 @@ def test_set_reason_is_readable_back_via_ranked(store):
     assert store.ranked("h", 0, 10)[0]["reason"] == "salary below range"
 
 
-def test_set_reason_without_a_status_yet_raises(store):
+def test_set_reason_without_a_status_yet_marks_it_seen(store):
     v = make_vacancy()
     store.upsert_vacancies([v])
-    with pytest.raises(ValueError, match="status"):
-        store.set_reason(v.id, "too early")
+
+    store.set_reason(v.id, "too early")
+
+    row = store.conn.execute(
+        "SELECT status, reason FROM vacancy_status WHERE vacancy_id=?", (v.id,)
+    ).fetchone()
+    assert row["status"] == "seen"
+    assert row["reason"] == "too early"
 
 
 def test_set_status_does_not_clear_an_existing_reason(store):

@@ -313,11 +313,13 @@ class JobsearchApp(App):
         new_text = self._prompt_editor(current)
         if new_text is None or new_text == current:
             return
-        try:
-            self.store.set_reason(vacancy_id, new_text)
-        except ValueError as exc:
-            self.notify(str(exc), severity="error")
-            return
+        had_status = current_row is not None
+        self.store.set_reason(vacancy_id, new_text)
+        if not had_status:
+            # set_reason just implicitly created the status row as 'seen' --
+            # keep the visible status column and any status-filtered view in
+            # sync with that, the same way an explicit status hotkey would.
+            self.mark_status_for_id(vacancy_id, "seen")
         if vacancy_id in self._row_cache:
             self._row_cache[vacancy_id] = dict(self._row_cache[vacancy_id]) | {"reason": new_text}
 

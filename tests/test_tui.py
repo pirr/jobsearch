@@ -473,22 +473,25 @@ async def test_edit_reason_saves_via_prompt_editor(store, profile, monkeypatch):
         assert row["reason"] == "salary too low"
 
 
-async def test_edit_reason_notifies_on_error_when_no_status_set_yet(store, profile, monkeypatch):
+async def test_edit_reason_marks_seen_when_no_status_set_yet(store, profile, monkeypatch):
     from jobsearch.tui.app import JobsearchApp
 
     ids = seed_active(store, profile, n=1)
     monkeypatch.setattr(JobsearchApp, "_prompt_editor", lambda self, current: "too early")
 
-    notifications = []
     app = JobsearchApp(store=store, candidate=profile)
-    app.notify = lambda message, **kw: notifications.append((message, kw.get("severity")))
     async with app.run_test() as pilot:
         await pilot.pause()
         app._selected_id = ids[0]
         await pilot.press("n")
         await pilot.pause()
 
-        assert notifications and notifications[0][1] == "error"
+        row = store.conn.execute(
+            "SELECT status, reason FROM vacancy_status WHERE vacancy_id=?", (ids[0],)
+        ).fetchone()
+        assert row["status"] == "seen"
+        assert row["reason"] == "too early"
+        assert app._row_cache[ids[0]]["status"] == "seen"
 
 
 async def test_status_and_reason_keys_stay_visible_in_an_80_column_footer(store, profile):
