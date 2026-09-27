@@ -10,6 +10,11 @@ def fixture(name: str):
     return json.loads((FIXTURES / f"{name}.json").read_text(encoding="utf-8"))
 
 
+def fixture_text(filename: str) -> str:
+    """A non-JSON recorded payload (Personio serves XML), returned verbatim."""
+    return (FIXTURES / filename).read_text(encoding="utf-8")
+
+
 @pytest.fixture
 def store(tmp_path):
     from jobsearch.vacancies.store import Store
@@ -53,6 +58,11 @@ class FakeResponse:
     def __init__(self, payload, status_code=200):
         self._payload = payload
         self.status_code = status_code
+        self.is_redirect = 300 <= status_code < 400
+
+    @property
+    def text(self):
+        return self._payload if isinstance(self._payload, str) else json.dumps(self._payload)
 
     def raise_for_status(self):
         if self.status_code >= 400:
@@ -71,7 +81,7 @@ class FakeClient:
         self.status_code = status_code
         self.requests = []
 
-    async def get(self, url, params=None):
+    async def get(self, url, params=None, **kwargs):
         self.requests.append((url, params))
         payload = self.payload
         if callable(payload):
@@ -92,7 +102,7 @@ class FakeMultiClient:
         self.default_status = default_status
         self.requests = []
 
-    async def get(self, url, params=None):
+    async def get(self, url, params=None, **kwargs):
         self.requests.append((url, params))
         for key, (status, payload) in self.responses.items():
             if key in url:

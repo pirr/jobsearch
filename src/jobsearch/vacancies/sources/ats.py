@@ -1,7 +1,7 @@
-"""Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee and
-Teamtailor -- the depth sources.
+"""Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Teamtailor
+and Personio -- the depth sources.
 
-All seven are unauthenticated public endpoints returning full descriptions
+All eight are unauthenticated public endpoints returning full descriptions
 (SmartRecruiters needs a second per-posting call for its; see below), but each
 has a different response shape, and a company slug that worked last month may
 404 today (probing found personio, contentful, getyourguide, blinkist and
@@ -12,13 +12,14 @@ being swallowed as an empty result.
 from __future__ import annotations
 
 import asyncio
+import xml.etree.ElementTree as ET
 from collections.abc import Sequence
 
 import httpx
 
 from ..models import Vacancy
 from ..normalize import normalize_location, normalize_timestamp, strip_html
-from .base import VacancySource, get_json
+from .base import SourceError, VacancySource, get_json, get_text
 
 
 class _CompanySource(VacancySource):
@@ -388,6 +389,60 @@ class TeamtailorSource(_CompanySource):
         )
 
 
+class PersonioSource(_CompanySource):
+    """`{tenant}.jobs.personio.de/xml` -- the only XML source here, verified
+    live 2026-09-27 (getquin, ottonova, wunderflats, 1komma5grad, ...).
+
+    Full descriptions ride inline as several `<jobDescription>` sections, each
+    a heading plus CDATA HTML -- no second call. Omitting `?language=` matters:
+    `language=en` silently drops every section written only in German, which
+    on some tenants is all of them. A dead tenant 307-redirects to
+    personio.com rather than 404ing (see get_text).
+    """
+
+    name = "personio"
+
+    async def fetch(self, client: httpx.AsyncClient) -> Sequence[Vacancy]:
+        url = f"https://{self.company}.jobs.personio.de/xml"
+        body = await get_text(client, url, retries=self.retries)
+        try:
+            root = ET.fromstring(body)
+        except ET.ParseError as exc:
+            raise SourceError(f"{url}: not a Personio XML feed ({exc})") from exc
+        return self.finalize([self._to_vacancy(p) for p in root.iter("position")])
+
+    def _to_vacancy(self, pos: ET.Element) -> Vacancy:
+        offices = [pos.findtext("office")] + [
+            o.text for o in pos.findall("additionalOffices/office")
+        ]
+        offices = list(dict.fromkeys(o.strip() for o in offices if o and o.strip()))
+        raw_loc, city, country, is_remote = normalize_location(", ".join(offices))
+        sections = "".join(
+            f"<h3>{d.findtext('name') or ''}</h3>{d.findtext('value') or ''}"
+            for d in pos.findall("jobDescriptions/jobDescription")
+        )
+        position_id = (pos.findtext("id") or "").strip()
+        return Vacancy(
+            source=self.name,
+            source_id=position_id,
+            url=f"https://{self.company}.jobs.personio.de/job/{position_id}",
+            # <subcompany> is a legal entity with a numeric suffix ("ottonova
+            # Holding AG - 9680") that differs between postings of one tenant,
+            # which would split close_missing_vacancies' per-company scope --
+            # the tenant slug is the one name stable across the whole feed.
+            company=self.company,
+            title=(pos.findtext("name") or "").strip(),
+            description=strip_html(sections),
+            location_raw=raw_loc,
+            location_city=city,
+            location_country=country,
+            is_remote=is_remote,
+            employment_type=pos.findtext("employmentType") or None,
+            posted_at=normalize_timestamp(pos.findtext("createdAt")),
+            raw={child.tag: (child.text or "").strip() for child in pos if len(child) == 0},
+        )
+
+
 ATS_SOURCES = {
     "greenhouse": GreenhouseSource,
     "lever": LeverSource,
@@ -396,4 +451,5 @@ ATS_SOURCES = {
     "workable": WorkableSource,
     "recruitee": RecruiteeSource,
     "teamtailor": TeamtailorSource,
+    "personio": PersonioSource,
 }

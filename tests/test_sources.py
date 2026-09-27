@@ -4,7 +4,7 @@ import asyncio
 from datetime import datetime, timezone
 
 import pytest
-from conftest import FakeClient, fixture
+from conftest import FakeClient, fixture, fixture_text
 
 from jobsearch.config import Config
 from jobsearch.vacancies.dedupe import vacancy_id
@@ -15,12 +15,14 @@ from jobsearch.vacancies.sources.ats import (
     AshbySource,
     GreenhouseSource,
     LeverSource,
+    PersonioSource,
     RecruiteeSource,
     SmartRecruitersSource,
     TeamtailorSource,
     WorkableSource,
 )
 from jobsearch.vacancies.sources.base import SourceError
+from jobsearch.vacancies.sources.hackernews import HackerNewsSource
 from jobsearch.vacancies.sources.himalayas import HimalayasSource
 from jobsearch.vacancies.sources.jobicy import JobicySource
 from jobsearch.vacancies.sources.remotejobsorg import RemoteJobsOrgSource
@@ -354,3 +356,112 @@ async def test_run_one_skips_the_closed_check_for_breadth_sources(store):
     result = await _run_one(ArbeitnowSource(), FakeClient(payload), store, sem, lock)
 
     assert result.closed == 0
+
+
+async def test_personio_parses_xml_feed_and_joins_description_sections():
+    client = FakeClient(fixture_text("personio.xml"))
+    vacancies = await PersonioSource("getquin").fetch(client)
+    assert len(client.requests) == 1  # descriptions ride inline, no detail call
+    assert len(vacancies) == 2
+    v = vacancies[0]
+    assert v.source == "personio" and v.company == "getquin"
+    assert v.source_id == "2597783"
+    assert v.url == "https://getquin.jobs.personio.de/job/2597783"
+    assert v.title == "Finanzbuchhalter (f/m/d) - Teilzeit"
+    # Several <jobDescription> sections, each a heading plus CDATA HTML.
+    assert "Was wir tun" in v.description and "getquin" in v.description
+    assert "<" not in v.description and "CDATA" not in v.description
+    assert v.location_raw == "Remote" and v.is_remote is True
+    assert v.employment_type == "permanent"
+    assert v.posted_at == datetime(2026, 4, 10, 12, 3, 36, tzinfo=timezone.utc)
+
+
+async def test_personio_joins_additional_offices():
+    vacancies = await PersonioSource("ottonova").fetch(
+        FakeClient(fixture_text("personio_ottonova.xml"))
+    )
+    v = vacancies[0]
+    assert v.location_raw == "München, Köln"
+    assert v.location_city == "München" and v.location_country == "DE"
+    # subcompany carries a legal-entity suffix ("... AG - 9698") that varies
+    # per posting within one tenant; the tenant slug is the stable name.
+    assert v.company == "ottonova"
+
+
+async def test_personio_dead_tenant_redirect_fails_fast():
+    # A tenant that doesn't exist 307-redirects to personio.com's marketing
+    # site (which then 429s behind a bot checkpoint) -- the redirect itself is
+    # the dead-slug signal, so it must fail without following or retrying.
+    client = FakeClient("", status_code=307)
+    with pytest.raises(SourceError):
+        await PersonioSource("nosuchtenant").fetch(client)
+    assert len(client.requests) == 1
+
+
+def test_build_sources_wires_personio_from_companies_yaml(tmp_path):
+    path = tmp_path / "companies.yaml"
+    path.write_text("personio:\n  - getquin\n")
+    sources = build_sources(Config(companies_path=path), only="personio")
+    assert len(sources) == 1 and isinstance(sources[0], PersonioSource)
+
+
+def _hn_client(item=None):
+    search, item = fixture("hn_search"), item or fixture("hn_item")
+    return FakeClient(lambda n: search if n == 1 else item)
+
+
+async def test_hackernews_reads_latest_who_is_hiring_thread():
+    # The search also returns "Who wants to be hired?" (candidates, not jobs)
+    # and last month's thread; only the newest hiring thread is read.
+    client = _hn_client()
+    vacancies = await HackerNewsSource().fetch(client)
+    assert len(client.requests) == 2
+    assert client.requests[1][0].endswith("/items/49522897")
+    # 7 recorded comments, 2 of which have no "|"/"·" header and are skipped.
+    assert len(vacancies) == 5
+    assert all(v.source == "hackernews" and v.id for v in vacancies)
+
+
+async def test_hackernews_parses_pipe_separated_header():
+    v = (await HackerNewsSource().fetch(_hn_client()))[0]
+    assert v.company == "Modash.io"
+    assert v.title == "Senior Product Engineer"
+    assert v.location_raw == "Remote (Europe)"
+    assert v.is_remote is True
+    assert v.employment_type == "Full-time"
+    assert v.source_id == "49522903"
+    assert v.url == "https://news.ycombinator.com/item?id=49522903"
+    assert v.posted_at == datetime(2026, 9, 1, 15, 1, 54, tzinfo=timezone.utc)
+    assert "Modash helps brands" in v.description and "<p>" not in v.description
+
+
+async def test_hackernews_strips_urls_from_company_and_falls_back_on_title():
+    by_id = {v.source_id: v for v in await HackerNewsSource().fetch(_hn_client())}
+    smarkets = by_id["49523018"]           # "Smarkets (https://...) | Full Time | Hybrid ..."
+    assert smarkets.company == "Smarkets"
+    assert smarkets.title                  # no role segment, but never empty
+    assert smarkets.is_remote is False     # "Hybrid - Onsite (London, UK)"
+    assert by_id["49522989"].company == "Snout"
+    assert by_id["49522989"].title == "Multiple Engineering + Product Roles"
+    assert by_id["49523166"].title == "Senior Engineer (Platform)"
+    # "REMOTE WILL BE IGNORED" mentions remote but means the opposite.
+    assert by_id["49523830"].is_remote is False
+
+
+async def test_hackernews_skips_deleted_comments():
+    item = fixture("hn_item")
+    item["children"][0]["text"] = None   # how Algolia serves a deleted comment
+    vacancies = await HackerNewsSource().fetch(_hn_client(item))
+    assert "49522903" not in {v.source_id for v in vacancies}
+
+
+async def test_hackernews_without_hiring_thread_is_an_error():
+    search = fixture("hn_search")
+    search["hits"] = [h for h in search["hits"] if "wants to be hired" in h["title"]]
+    with pytest.raises(SourceError):
+        await HackerNewsSource().fetch(FakeClient(search))
+
+
+def test_build_sources_includes_hackernews_as_breadth_source():
+    sources = build_sources(Config(), only="hackernews")
+    assert len(sources) == 1 and isinstance(sources[0], HackerNewsSource)

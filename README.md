@@ -55,8 +55,9 @@ to listen on `0.0.0.0` rather than only `127.0.0.1`).
 ```bash
 jobsearch ingest                    # fetch vacancies into jobsearch.db
 jobsearch ingest --source jobicy    # or just one: arbeitnow|remoteok|jobicy|himalayas|remotive|
-                                     #   workingnomads|remotejobsorg|adzuna|greenhouse|lever|
-                                     #   ashby|smartrecruiters|workable|recruitee|teamtailor
+                                     #   workingnomads|remotejobsorg|hackernews|adzuna|greenhouse|
+                                     #   lever|ashby|smartrecruiters|workable|recruitee|teamtailor|
+                                     #   personio
 jobsearch doctor                    # check sources, list dead company slugs
 jobsearch discover-ats "Some Company"           # guess & probe ATS slugs for a company name
 jobsearch discover-ats "Some Company" --write   # ...and append live hits to companies.yaml
@@ -114,30 +115,36 @@ Slugs rot — `jobsearch doctor` reports dead ones to prune, and
 slug candidates from a company name and probes each ATS platform for a live
 board, with no auth and no LLM tokens involved.
 
-Workable, Recruitee, and Teamtailor are also wired up as ATS platforms in
-code, but `data/companies.yaml` has no verified slugs for them yet — a live
-`discover-ats` sweep over the companies already in that file found zero
-hits, so all three currently yield no vacancies until someone finds and
-verifies real slugs for them, e.g. via `jobsearch discover-ats --write`
-against a broader/different set of company names.
+Workable, Recruitee, Teamtailor and Personio are wired up as ATS platforms
+too; `data/companies.yaml` has a few verified Workable/Teamtailor/Personio
+slugs so far and none for Recruitee — `jobsearch discover-ats --write` finds
+more.
 
-SmartRecruiters is the odd one out among the seven ATS platforms: its listing
+Personio is the only XML feed (`{tenant}.jobs.personio.de/xml`). A tenant
+that has left Personio 307-redirects to personio.com instead of 404ing; that
+redirect is treated as a dead slug, not followed.
+
+SmartRecruiters is the odd one out among the eight ATS platforms: its listing
 endpoint never inlines a job's description, so each posting needs a second,
 per-job request. To keep one large company from turning into hundreds of
 requests every ingest run, postings are capped (`max_postings`, default 150)
 rather than fetched exhaustively.
 
-Seven sources need no company list and cover many companies on their own:
+Eight sources need no company list and cover many companies on their own:
 Arbeitnow (~2,000 active EU jobs), RemoteOK (global remote tech jobs),
 Jobicy (queried with `geo=europe&industry=dev`, so only European engineering
 roles), Himalayas (global remote jobs, structured per-job country
 restrictions, bounded cursor pagination), Remotive (global remote jobs;
 its free API currently exposes only ~18 jobs, so it adds little volume),
-Working Nomads (global remote jobs, one bounded request, no pagination) and
+Working Nomads (global remote jobs, one bounded request, no pagination),
 RemoteJobs.org (global remote jobs; only the first page of its own paginated
-feed is fetched, same bounded-slice tradeoff as Himalayas/Adzuna).
+feed is fetched, same bounded-slice tradeoff as Himalayas/Adzuna) and Hacker
+News "Who is hiring?" (the newest monthly thread only, via the public Algolia
+HN API; posts have no schema, so company/role/location are parsed best-effort
+from the conventional `Company | Role | Location` header line, and posts
+without such a header are skipped).
 
-An eighth, Adzuna, is optional: unlike the others it's a general job board (not
+A ninth, Adzuna, is optional: unlike the others it's a general job board (not
 remote-only) and needs a free App ID/Key from
 [developer.adzuna.com](https://developer.adzuna.com/signup) — set
 `JOBSEARCH_ADZUNA_APP_ID`/`JOBSEARCH_ADZUNA_APP_KEY` in `.env` to enable it

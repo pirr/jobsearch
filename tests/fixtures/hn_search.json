@@ -1,0 +1,35 @@
+{
+  "hits": [
+    {
+      "objectID": "49522897",
+      "title": "Ask HN: Who is hiring? (September 2026)",
+      "author": "whoishiring",
+      "created_at": "2026-09-01T15:01:17Z",
+      "created_at_i": 1788274877,
+      "num_comments": 397,
+      "story_id": 49522897
+    },
+    {
+      "objectID": "49522896",
+      "title": "Ask HN: Who wants to be hired? (September 2026)",
+      "author": "whoishiring",
+      "created_at": "2026-09-01T15:01:17Z",
+      "created_at_i": 1788274877,
+      "num_comments": 575,
+      "story_id": 49522896
+    },
+    {
+      "objectID": "49156683",
+      "title": "Ask HN: Who is hiring? (August 2026)",
+      "author": "whoishiring",
+      "created_at": "2026-08-03T15:00:54Z",
+      "created_at_i": 1785769254,
+      "num_comments": 379,
+      "story_id": 49156683
+    }
+  ],
+  "nbHits": 510,
+  "page": 0,
+  "nbPages": 170,
+  "hitsPerPage": 3
+}

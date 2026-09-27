@@ -262,3 +262,8 @@ workable:
 teamtailor:
   # EU/EMEA-remote or Balkan/Cyprus-office fit, verified live 2026-09-27
   - sumsub                   # Limassol
+
+# Personio -- XML feed, see sources/ats.py. Verified live 2026-09-27.
+personio:
+  - jobleads                 # "fully remote within Europe" data/AI roles
+  - cito-transport-technologies  # Berlin, remote backend/AI roles

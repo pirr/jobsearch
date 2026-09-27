@@ -65,3 +65,35 @@ async def get_json(
                 await asyncio.sleep(delay)
                 delay *= 2
     raise SourceError(f"{url}: {last}") from last
+
+
+async def get_text(
+    client: httpx.AsyncClient,
+    url: str,
+    *,
+    params: dict | None = None,
+    retries: int = 3,
+):
+    """GET a non-JSON body (Personio serves XML), with get_json's backoff.
+
+    Redirects are not followed: for Personio, a dead tenant redirects to the
+    vendor's marketing site instead of 404ing, so a redirect is the dead-slug
+    signal here and fails fast the same way a 404 does in get_json.
+    """
+    delay = 1.0
+    last: Exception | None = None
+    for attempt in range(retries):
+        try:
+            resp = await client.get(url, params=params, follow_redirects=False)
+            if resp.status_code == 404 or resp.is_redirect:
+                raise SourceError(f"{resp.status_code} (dead or moved): {url}")
+            resp.raise_for_status()
+            return resp.text
+        except SourceError:
+            raise
+        except httpx.HTTPError as exc:
+            last = exc
+            if attempt < retries - 1:
+                await asyncio.sleep(delay)
+                delay *= 2
+    raise SourceError(f"{url}: {last}") from last

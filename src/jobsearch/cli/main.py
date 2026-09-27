@@ -104,8 +104,8 @@ def ingest_cmd(
     source: str = typer.Option(
         None, "--source", "-s",
         help=(
-            "arbeitnow|remoteok|jobicy|himalayas|remotive|workingnomads|remotejobsorg|adzuna|"
-            "greenhouse|lever|ashby|smartrecruiters|workable|recruitee|teamtailor"
+            "arbeitnow|remoteok|jobicy|himalayas|remotive|workingnomads|remotejobsorg|hackernews|"
+            "adzuna|greenhouse|lever|ashby|smartrecruiters|workable|recruitee|teamtailor|personio"
         ),
     ),
     company: str = typer.Option(None, "--company", "-c", help="Single ATS company slug"),
