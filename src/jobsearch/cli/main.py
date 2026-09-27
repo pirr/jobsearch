@@ -319,8 +319,8 @@ def run(
     console.print()
     console.print(table)
     console.print(
-        "[dim]`jobsearch show`/`tui` read the active profile -- "
-        "`jobsearch use-profile <id>` to switch to another one's ranking.[/]"
+        "[dim]`show`/`tui` display one profile at a time -- switch with the TUI's "
+        "profile button or `jobsearch use-profile <id>`.[/]"
     )
     if any(report is None for _, _, report in outcomes):
         raise typer.Exit(1)

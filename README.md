@@ -89,19 +89,25 @@ automatically) instead of re-running `show --limit N`. Inside it:
 
 - `/` search by title/company/location; the sort dropdown and remote-only
   switch in the filter bar re-query as you change them
+- the profile button at the right of the filter bar shows the active
+  profile's CV file name, with when it was last rated next to it; clicking
+  it opens a picker of every archived profile (`Esc` cancels). Picking one
+  makes it active -- the same as `jobsearch use-profile <id>`, so `show`
+  follows along too -- and reloads the list with that profile's ratings
 - `Enter` opens a vacancy's full detail (matched/missing skills, evidence,
   blockers) -- the URL there is a clickable terminal hyperlink
 - `s` / `d` / `a` mark seen / dismissed / applied in place
 - `i` / `o` / `x` mark interview / accepted / rejected -- the application
   outcome, once there is one
-- `c` cycles the view: active -> dismissed -> closed -> duplicates
+- `c` cycles the view: active -> new -> interview -> applied -> dismissed ->
+  closed -> duplicates (active is everything not dismissed/closed; new is
+  vacancies with no status yet)
 - `m` opens the duplicate picker (search any vacancy, confirm, hide); `u` in
   the duplicates view undoes a mark
 - `e` opens $EDITOR on the description (same flow as `update-description`),
   then re-rates in the background without blocking the UI
 - `n` opens $EDITOR on a free-text reason/note for the vacancy (e.g. why it
-  was rejected) -- mark a status first, there's nowhere to attach it to yet
-  otherwise
+  was rejected); on a vacancy with no status yet, saving a note marks it seen
 - `r` refreshes, `q`/`Esc` goes back/quits
 
 Under Docker: `docker compose run --rm jobsearch tui` -- no compose file
@@ -112,10 +118,14 @@ changes needed, a pseudo-TTY is allocated the same way any interactive
 
 `jobsearch run` does one ingest and then a `match` for each profile listed in
 `data/pipeline.yaml` (gitignored; copy `data/pipeline.example.yaml`, or point
-`JOBSEARCH_PIPELINE` elsewhere). Profiles are referenced by their archive id
-from `jobsearch profiles` and loaded from `profile_storage/<id>/`, so the
-active `profile.json` is never changed -- use `jobsearch use-profile <id>` to
-view another profile's ranking in `show`/`tui`.
+`JOBSEARCH_PIPELINE` elsewhere). Every listed profile gets rated; ratings are
+stored per profile, so they all sit side by side in the database.
+
+Profiles are referenced by their archive id from `jobsearch profiles` and
+loaded from `profile_storage/<id>/`. `run` does not change which profile is
+active: `show` and `tui` display one profile's ranking at a time, and
+switching between the rated profiles needs no re-rating -- use the TUI's
+profile button or `jobsearch use-profile <id>`.
 
 ```yaml
 ingest: true            # false -> match only
