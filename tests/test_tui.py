@@ -732,3 +732,36 @@ async def test_edit_description_shows_llm_hint_notification_on_failure(store, pr
 
         assert any(sev == "error" for _, sev in notifications)
         assert store.get_vacancy(v.id)["description"] == "new text"  # description saved even if re-rate fails
+
+
+async def test_shift_p_opens_the_profile_picker(store, profile):
+    from jobsearch.tui.app import JobsearchApp
+    from jobsearch.tui.profile_modal import ProfilePickerModal
+
+    seed_active(store, profile, n=1)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("P")
+        await pilot.pause()
+        assert isinstance(app.screen, ProfilePickerModal)
+        await pilot.press("escape")
+        await pilot.pause()
+        assert not isinstance(app.screen, ProfilePickerModal)
+
+
+async def test_shift_p_in_search_types_a_letter_instead(store, profile):
+    # The search Input consumes printable keys before app bindings see them,
+    # so a capital P in a query must not pop the picker open.
+    from jobsearch.tui.app import JobsearchApp
+    from jobsearch.tui.profile_modal import ProfilePickerModal
+    from textual.widgets import Input
+
+    seed_active(store, profile, n=1)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("slash", "P")
+        await pilot.pause()
+        assert not isinstance(app.screen, ProfilePickerModal)
+        assert app.query_one("#search", Input).value == "P"

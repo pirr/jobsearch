@@ -65,6 +65,10 @@ class JobsearchApp(App):
         Binding("e", "edit_description", "Edit desc"),
         Binding("n", "edit_reason", "Reason"),
         Binding("c", "cycle_view", "Cycle view"),
+        # Hidden from the footer: it's already full at 80 columns (see
+        # _STATUS_GROUP), and the profile button in the top bar is the
+        # visible entry point for the same action.
+        Binding("P", "profiles_select", "Profile", show=False),
         Binding("r", "refresh", "Refresh"),
         Binding("q", "quit", "Quit"),
         Binding("escape", "cancel_search", "Cancel search", show=False, group=_SEARCH_GROUP),

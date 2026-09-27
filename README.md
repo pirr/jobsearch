@@ -91,7 +91,8 @@ automatically) instead of re-running `show --limit N`. Inside it:
   switch in the filter bar re-query as you change them
 - the profile button at the right of the filter bar shows the active
   profile's CV file name, with when it was last rated next to it; clicking
-  it opens a picker of every archived profile (`Esc` cancels). Picking one
+  it (or `Shift+P`) opens a picker of every archived profile (`Esc`
+  cancels). Picking one
   makes it active -- the same as `jobsearch use-profile <id>`, so `show`
   follows along too -- and reloads the list with that profile's ratings
 - `Enter` opens a vacancy's full detail (matched/missing skills, evidence,
