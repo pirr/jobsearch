@@ -13,6 +13,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, Middle, Center
 from textual.widgets import Button, DataTable, Footer, Header, Input, Select, Static, Switch, Label
+from textual.widgets.data_table import CellDoesNotExist
 
 from .profile_modal import ProfilePickerModal
 from ..candidate.profile import CandidateProfile
@@ -92,7 +93,29 @@ class JobsearchApp(App):
         self._loaded_ids: set[str] = set()
         self._row_cache: dict[str, object] = {}
         self._columns = []
-        self._selected_id: str | None = None
+
+    @property
+    def _selected_id(self) -> str | None:
+        """The vacancy under the table cursor, read from the table each time.
+
+        Deliberately not cached from RowHighlighted: DataTable.remove_row
+        keeps the cursor on the same index without posting that event, so a
+        cached id went stale after every removal -- the next key acted on the
+        removed vacancy instead of the row now under the cursor.
+        """
+        table = self.query_one("#table", DataTable)
+        if table.row_count == 0:
+            return None
+        try:
+            row_key, _ = table.coordinate_to_cell_key(table.cursor_coordinate)
+        except CellDoesNotExist:
+            return None
+        return str(row_key.value) if row_key.value else None
+
+    @_selected_id.setter
+    def _selected_id(self, vacancy_id: str) -> None:
+        table = self.query_one("#table", DataTable)
+        table.move_cursor(row=table.get_row_index(vacancy_id))
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -228,7 +251,6 @@ class JobsearchApp(App):
         self.load_first_page()
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
-        self._selected_id = str(event.row_key.value) if event.row_key.value else None
         table = self.query_one("#table", DataTable)
         if event.cursor_row >= table.row_count - 5:
             self.load_more()

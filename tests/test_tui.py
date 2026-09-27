@@ -765,3 +765,53 @@ async def test_shift_p_in_search_types_a_letter_instead(store, profile):
         await pilot.pause()
         assert not isinstance(app.screen, ProfilePickerModal)
         assert app.query_one("#search", Input).value == "P"
+
+
+async def test_status_keys_keep_working_after_a_row_is_removed(store, profile):
+    # Real bug report: in the "new" view, marking rows one after another left
+    # the last one stuck. DataTable.remove_row keeps the cursor on the same
+    # index without posting RowHighlighted, so an id cached from that event
+    # kept pointing at the removed row -- the next key acted on it again
+    # instead of on the row now under the cursor.
+    from jobsearch.tui.app import JobsearchApp
+    from textual.widgets import DataTable
+
+    ids = seed_active(store, profile, n=2)
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app.view = "new"
+        app.load_first_page()
+        await pilot.pause()
+        table = app.query_one("#table", DataTable)
+        assert table.row_count == 2
+
+        await pilot.press("x")
+        await pilot.pause()
+        assert app._selected_id == ids[1]   # the row now under the cursor
+        await pilot.press("x")
+        await pilot.pause()
+
+        assert table.row_count == 0
+        assert app._selected_id is None
+        statuses = dict(store.conn.execute("SELECT vacancy_id, status FROM vacancy_status"))
+        assert statuses == {ids[0]: "rejected", ids[1]: "rejected"}
+
+
+async def test_reason_after_removal_targets_the_row_under_the_cursor(store, profile, monkeypatch):
+    # Same stale-id bug, worse outcome: a note typed right after dismissing a
+    # row landed on the dismissed vacancy, not the one being looked at.
+    from jobsearch.tui.app import JobsearchApp
+
+    ids = seed_active(store, profile, n=2)
+    monkeypatch.setattr(JobsearchApp, "_prompt_editor", lambda self, current: "note")
+    app = JobsearchApp(store=store, candidate=profile)
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        await pilot.press("d")    # dismissed -> leaves the active view
+        await pilot.pause()
+        await pilot.press("n")
+        await pilot.pause()
+        reasons = dict(store.conn.execute("SELECT vacancy_id, reason FROM vacancy_status"))
+        assert reasons.get(ids[1]) == "note"
+        assert reasons.get(ids[0]) is None
