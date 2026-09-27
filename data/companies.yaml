@@ -115,6 +115,15 @@ greenhouse:
   - amplemarket
   - hightouch
   - planetscale
+  # EU/EMEA-remote or Balkan/Cyprus-office fit, verified live 2026-09-27
+  - canonical                # home-based EMEA/worldwide
+  - nebius                   # Remote Europe, Belgrade office
+  - jetbrains                # Belgrade/Limassol
+  - fivetran                 # incl. Novi Sad, Serbia
+  - nix                      # N-iX; Europe remote, outsourcing
+  - toloka                   # EU remote
+  - nordeus                  # Belgrade
+  - nansen                   # Remote Europe; same board also on ashby
 lever:
   - finn
   # verified live 2026-09-05
@@ -136,6 +145,9 @@ lever:
   - qonto
   - pigment
   - spotify
+  # EU/EMEA-remote or Balkan/Cyprus-office fit, verified live 2026-09-27
+  - provectus                # Serbia/North Macedonia
+  - metabase                 # Global Remote; Clojure stack
 ashby:
   - enpal
   - doctolib
@@ -220,6 +232,10 @@ ashby:
   - resend
   - clerk
   - inngest
+  # EU/EMEA-remote or Balkan/Cyprus-office fit, verified live 2026-09-27
+  - dune                     # Europe remote
+  - circle                   # Anywhere/EMEA
+  - clickhouse               # EMEA
 # SmartRecruiters -- unlike the other three platforms, the list endpoint never
 # inlines a description (a per-posting detail call is needed; see
 # sources/ats.py). Verified live 2026-09-08.
@@ -239,3 +255,10 @@ workable:
   # imported from career-ops-hq/career-ops (templates/portals.example.yml), verified live 2026-09-11
   - semios
   - huggingface
+  # EU/EMEA-remote or Balkan/Cyprus-office fit, verified live 2026-09-27
+  - zyte                     # Scrapy authors; remote, Zagreb
+  - reversinglabs            # Zagreb
+
+teamtailor:
+  # EU/EMEA-remote or Balkan/Cyprus-office fit, verified live 2026-09-27
+  - sumsub                   # Limassol
