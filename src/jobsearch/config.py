@@ -56,6 +56,10 @@ class Config:
     companies_path: Path = field(
         default_factory=lambda: _env_path("JOBSEARCH_COMPANIES", "data/companies.yaml")
     )
+    # `jobsearch run`'s plan: which archived profiles to match after ingest.
+    pipeline_path: Path = field(
+        default_factory=lambda: _env_path("JOBSEARCH_PIPELINE", "data/pipeline.yaml")
+    )
 
     # LLM
     llm_backend: str = field(default_factory=lambda: _env_str("JOBSEARCH_LLM", "ollama"))

@@ -65,6 +65,8 @@ jobsearch profile ./cv.pdf          # extract a candidate profile (archived auto
 jobsearch profiles                  # list every archived profile version
 jobsearch use-profile <id>          # reactivate one (copies it onto profile.json)
 jobsearch match                     # filter, shortlist, rate
+jobsearch run                       # ingest, then match every profile in data/pipeline.yaml
+jobsearch run --skip-ingest         # ...match only
 jobsearch show                      # ranked results
 jobsearch show --full               # with evidence for each match
 jobsearch mark <vacancy-id> dismissed
@@ -105,6 +107,29 @@ automatically) instead of re-running `show --limit N`. Inside it:
 Under Docker: `docker compose run --rm jobsearch tui` -- no compose file
 changes needed, a pseudo-TTY is allocated the same way any interactive
 `docker compose run` already gets one.
+
+## Scheduled runs: `jobsearch run`
+
+`jobsearch run` does one ingest and then a `match` for each profile listed in
+`data/pipeline.yaml` (gitignored; copy `data/pipeline.example.yaml`, or point
+`JOBSEARCH_PIPELINE` elsewhere). Profiles are referenced by their archive id
+from `jobsearch profiles` and loaded from `profile_storage/<id>/`, so the
+active `profile.json` is never changed -- use `jobsearch use-profile <id>` to
+view another profile's ranking in `show`/`tui`.
+
+```yaml
+ingest: true            # false -> match only
+profiles:
+  - 20260101-000000-my_resume
+  - id: 20260102-000000-my_other_resume
+    shortlist: 100      # per-profile JOBSEARCH_SHORTLIST override
+    force: false        # re-rate already-rated vacancies
+```
+
+The file and every listed profile are validated before ingest starts, so a
+typo fails in a second rather than after a long fetch. An LLM error on one
+profile is reported and the run moves on to the next; the exit code is 1 if
+any profile failed.
 
 ## Sources
 

@@ -1,0 +1,14 @@
+# Plan for `jobsearch run`: ingest once, then match each profile below.
+# Copy to data/pipeline.yaml (gitignored) -- or point JOBSEARCH_PIPELINE
+# elsewhere -- and list profile ids from `jobsearch profiles`.
+#
+# Profiles are read from the archive (profile_storage/<id>/profile.json);
+# the active profile.json that `show`/`tui` use is left untouched.
+
+ingest: true            # false -> match only (same as `run --skip-ingest`)
+
+profiles:
+  - 20260101-000000-my_resume                 # bare id: default settings
+  - id: 20260102-000000-my_other_resume
+    shortlist: 100      # overrides JOBSEARCH_SHORTLIST for this profile
+    force: false        # true -> re-rate vacancies already rated for it

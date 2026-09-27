@@ -29,6 +29,7 @@ from ..matching.llm.base import LLMError
 from ..matching.pipeline import rate_and_save, run_match
 from ..matching.rating import verdict_for
 from ..matching.retrieval import BM25Retriever, build_retriever
+from ..run_plan import RunPlanError, load_run_plan
 from ..vacancies.discovery import PROBEABLE_ATS, discover, hits, write_discoveries
 from ..vacancies.ingest import build_sources, check_sources, ingest
 from ..vacancies.store import Store
@@ -117,6 +118,10 @@ def ingest_cmd(
     except ValueError as exc:
         _fail(str(exc))
 
+    _ingest_and_report(config, sources)
+
+
+def _ingest_and_report(config, sources) -> None:
     console.print(f"ingesting from {len(sources)} source(s)...")
     with _store() as store:
         before = store.count_vacancies()
@@ -172,25 +177,31 @@ def match(
     with _store() as store:
         if store.count_vacancies() == 0:
             _fail("no vacancies stored -- run `jobsearch ingest` first")
-
-        console.print(
-            f"profile {candidate.hash()} | retriever {engine.name} | "
-            f"rater {llm.name} | shortlist {size}"
-        )
-        done = [0]
-
-        def show(row, outcome):
-            done[0] += 1
-            mark = "[red]x[/]" if not outcome.ok else f"{outcome.rating.score:3}"
-            console.print(f"  [{done[0]:3}] {mark}  {row['title'][:56]}")
-
         try:
-            report = run_match(
-                store, candidate, llm, engine,
-                shortlist_size=size, force=force, progress=show,
-            )
+            _match_and_report(store, candidate, llm, engine, size=size, force=force)
         except LLMError as exc:
             _fail_llm(exc, config)
+    console.print("\nrun [bold]jobsearch show[/] to see the ranking")
+
+
+def _match_and_report(store, candidate, llm, engine, *, size: int, force: bool):
+    """Rate one profile and print match's report. LLMError propagates: `match`
+    aborts on it, `run` records it and moves on to the next profile."""
+    console.print(
+        f"profile {candidate.hash()} | retriever {engine.name} | "
+        f"rater {llm.name} | shortlist {size}"
+    )
+    done = [0]
+
+    def show(row, outcome):
+        done[0] += 1
+        mark = "[red]x[/]" if not outcome.ok else f"{outcome.rating.score:3}"
+        console.print(f"  [{done[0]:3}] {mark}  {row['title'][:56]}")
+
+    report = run_match(
+        store, candidate, llm, engine,
+        shortlist_size=size, force=force, progress=show,
+    )
 
     console.print(
         f"\n{report.total:,} stored -> {report.after_filters:,} after hard filters "
@@ -214,7 +225,105 @@ def match(
             f"[yellow]{report.dropped_claims} unsupported claim(s) dropped[/] "
             "[dim](model quoted text not present in the sources)[/]"
         )
-    console.print("\nrun [bold]jobsearch show[/] to see the ranking")
+    return report
+
+
+@app.command()
+def run(
+    plan_file: Path = typer.Option(
+        None, "--config",
+        help="Pipeline file (default: JOBSEARCH_PIPELINE or data/pipeline.yaml)",
+    ),
+    skip_ingest: bool = typer.Option(
+        False, "--skip-ingest", help="Match only, even if the file says ingest: true",
+    ),
+    force: bool = typer.Option(False, help="Re-rate already-rated vacancies for every profile"),
+    retriever: str = typer.Option(None, help="bm25|embeddings"),
+):
+    """Ingest, then match every profile listed in the pipeline file."""
+    config = load_config()
+    path = plan_file or config.pipeline_path
+    try:
+        plan = load_run_plan(path)
+    except RunPlanError as exc:
+        _fail(str(exc))
+
+    # Every profile is loaded before anything slow starts: a stale id should
+    # fail in a second, not after a full ingest and the profiles before it.
+    candidates = []
+    problems = []
+    for entry in plan.profiles:
+        archived = config.profile_storage_path / entry.id / "profile.json"
+        if not archived.exists():
+            problems.append(f"{entry.id}: {archived} not found")
+            continue
+        try:
+            candidates.append((entry, CandidateProfile.load(archived)))
+        except Exception as exc:
+            problems.append(f"{entry.id}: unreadable profile.json ({exc})")
+    if problems:
+        _fail(
+            f"{path}: " + "; ".join(problems)
+            + " -- `jobsearch profiles` lists the valid ids"
+        )
+
+    try:
+        llm = build_llm(config)
+        name = retriever or config.retriever
+        engine = build_retriever(name, build_embedder(config) if name == "embeddings" else None)
+    except LLMError as exc:
+        _fail_llm(exc, config)
+    except ValueError as exc:
+        _fail(str(exc))
+
+    if plan.ingest and not skip_ingest:
+        try:
+            sources = build_sources(config)
+        except ValueError as exc:
+            _fail(str(exc))
+        _ingest_and_report(config, sources)
+
+    outcomes = []
+    with _store() as store:
+        if store.count_vacancies() == 0:
+            _fail("no vacancies stored -- nothing to match")
+        for entry, candidate in candidates:
+            console.rule(f"[bold]{entry.id}[/]")
+            try:
+                report = _match_and_report(
+                    store, candidate, llm, engine,
+                    size=entry.shortlist or config.shortlist_size,
+                    force=force or entry.force,
+                )
+            except LLMError as exc:
+                # Unlike `match`, one profile's failure doesn't abort the rest:
+                # an unattended run should get as far as it can.
+                hint = llm_hint(config)
+                console.print(f"[bold red]error:[/] {exc}" + (f"\n{hint}" if hint else ""))
+                outcomes.append((entry.id, candidate.hash(), None))
+                continue
+            outcomes.append((entry.id, candidate.hash(), report))
+
+    table = Table(title="run summary")
+    table.add_column("profile", no_wrap=True)   # the id is what `use-profile` needs
+    for col in ("hash", "shortlisted", "LLM calls", "rated", "failed"):
+        table.add_column(col)
+    for profile_id, profile_hash, report in outcomes:
+        if report is None:
+            table.add_row(profile_id, profile_hash, "", "", "", "[red]error[/]")
+        else:
+            table.add_row(
+                profile_id, profile_hash, str(report.shortlisted), str(report.llm_calls),
+                str(report.rated), str(report.failed),
+            )
+    console.print()
+    console.print(table)
+    console.print(
+        "[dim]`jobsearch show`/`tui` read the active profile -- "
+        "`jobsearch use-profile <id>` to switch to another one's ranking.[/]"
+    )
+    if any(report is None for _, _, report in outcomes):
+        raise typer.Exit(1)
 
 
 @app.command()

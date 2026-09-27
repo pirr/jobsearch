@@ -10,3 +10,4 @@ profile_storage/
 .env
 .idea/
 .claude/
+data/pipeline.yaml
