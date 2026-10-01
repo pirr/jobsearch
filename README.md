@@ -1,8 +1,7 @@
 # jobsearch
 
 Rank job vacancies against your CV, using an LLM. See `task.md` for the
-original brief and `docs/superpowers/specs/` (or ask for the plan file) for
-the full design rationale.
+original brief and `docs/design/` for the full design rationale.
 
 ## Setup
 

@@ -11,3 +11,5 @@ profile_storage/
 .idea/
 .claude/
 data/pipeline.yaml
+CLAUDE.md
+docs/superpowers/

@@ -12,8 +12,8 @@ action (status, duplicate marking, description editing) happen in place.
 
 Considered and rejected: a browser-based web UI. Rejected because it requires
 a new long-running service (this project's `jobsearch` docker-compose service
-is explicitly one-shot, `run --rm`, per `CLAUDE.md`), a new dependency stack
-(FastAPI/Jinja2/etc.), and buys nothing this is a personal, single-user,
+is explicitly one-shot, `run --rm`, per `docker-compose.yml`), a new dependency stack
+(FastAPI/Jinja2/etc.), and buys nothing this personal, single-user,
 local-machine tool needs (no other device needs to reach it). A TUI fits the
 existing one-shot, interactive `docker compose run --rm` pattern exactly and
 reuses 100% of the existing `Store`-based domain code.
