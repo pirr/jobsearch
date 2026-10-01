@@ -317,7 +317,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--host", default="http://192.168.1.20:8080",
+    parser.add_argument("--host", default="http://localhost:8080",
                          help="llama.cpp / llama-swap OpenAI-compatible host")
     parser.add_argument("--golden-dir", default="data/golden",
                          help="directory of golden set JSON files")
