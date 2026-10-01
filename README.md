@@ -1,5 +1,8 @@
 # jobsearch
 
+[![tests](https://github.com/pirr/jobsearch/actions/workflows/tests.yml/badge.svg)](https://github.com/pirr/jobsearch/actions/workflows/tests.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Rank job vacancies against your CV, using an LLM. See `task.md` for the
 original brief and `docs/design/` for the full design rationale.
 
